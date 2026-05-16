@@ -388,42 +388,15 @@ let codeTimer = null;
 
 // ── PAYMENT SUCCESS HANDLER ──
 async function handlePaymentSuccess() {
-  // Poll Supabase for up to 10 seconds waiting for webhook to activate membership
-  let attempts = 0;
-  const maxAttempts = 30;
-
-  const poll = async () => {
-    const { data: mm } = await sb.from('member_memberships')
-      .select('*')
-      .eq('profile_id', currentUser.id)
-      .eq('active', true)
-      .maybeSingle();
-
-    if (mm) {
-      // Membership is active — full reload to clear state
-      window.location.href = window.location.pathname;
-    } else {
-      attempts++;
-      if (attempts < maxAttempts) {
-        setTimeout(poll, 1000);
-      } else {
-        // Webhook may be slow — show refresh button
-        showScreen('payment');
-        document.getElementById('success-payment').textContent = '✓ Payment received! Click below to enter your dashboard.';
-        document.getElementById('success-payment').classList.add('show');
-        document.getElementById('btn-pay').style.display = 'none';
-        document.getElementById('btn-refresh-membership').style.display = 'block';
-        // Also auto-reload after 2 more seconds
-        setTimeout(() => { window.location.href = window.location.pathname; }, 2000);
-      }
-    }
-  };
-
   showScreen('payment');
-  document.getElementById('success-payment').textContent = 'Payment confirmed — activating your membership...';
+  document.getElementById('success-payment').textContent = '✓ Payment confirmed! Taking you to your dashboard...';
   document.getElementById('success-payment').classList.add('show');
   document.getElementById('btn-pay').style.display = 'none';
-  await poll();
+  document.getElementById('btn-refresh-membership').style.display = 'block';
+  // Wait 6 seconds for webhook to fire, then reload clean
+  setTimeout(() => {
+    window.location.href = window.location.pathname;
+  }, 6000);
 }
 
 // ── AUTH ──
