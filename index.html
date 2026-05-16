@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Recovery Pod</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --text: #f0ede8;
+    --muted: #6b6b6b;
+    --accent: #c8f54a;
+    --accent-dark: #9dc435;
+    --danger: #ff4d4d;
+    --basic: #7dd3fc;
+    --standard: #c084fc;
+    --unlimited: #c8f54a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3 { font-family: 'Syne', sans-serif; }
+
+  /* ── SCREENS ── */
+  .screen {
+    display: none;
+    min-height: 100vh;
+    padding: 0;
+    animation: fadeIn 0.3s ease;
+  }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── BUTTONS ── */
+  .btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.02em;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: #0a0a0a; }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--muted); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ── INPUTS ── */
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-group label { font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+  input[type="email"], input[type="password"], input[type="text"], input[type="tel"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    width: 100%;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  input:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--muted); }
+
+  /* ── ERROR ── */
+  .error-msg {
+    background: rgba(255,77,77,0.1);
+    border: 1px solid rgba(255,77,77,0.3);
+    color: var(--danger);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+
+  /* ── NAV TABS ── */
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 12px 0 20px;
+    z-index: 100;
+  }
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: opacity 0.15s;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .tab-item.active { opacity: 1; color: var(--accent); }
+  .tab-item svg { width: 22px; height: 22px; }
+
+  /* ── ─────────────────── ── */
+  /* ── SCREEN: AUTH        ── */
+  /* ── ─────────────────── ── */
+  #screen-auth {
+    padding: 60px 28px 40px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  .auth-logo {
+    width: 52px; height: 52px;
+    background: var(--accent);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 28px;
+  }
+  .auth-logo svg { width: 28px; height: 28px; color: #0a0a0a; }
+  .auth-title { font-size: 28px; font-weight: 800; line-height: 1.2; margin-bottom: 6px; }
+  .auth-sub { font-size: 15px; color: var(--muted); margin-bottom: 36px; }
+
+  .auth-tabs { display: flex; gap: 8px; margin-bottom: 28px; }
+  .auth-tab {
+    flex: 1; padding: 10px;
+    border-radius: 8px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .auth-tab.active { background: var(--accent); color: #0a0a0a; border-color: var(--accent); }
+
+  .auth-form { display: flex; flex-direction: column; gap: 18px; }
+  .auth-form.hidden { display: none; }
+
+  /* ── ─────────────────── ── */
+  /* ── SCREEN: ONBOARDING  ── */
+  /* ── ─────────────────── ── */
+  #screen-onboarding { padding: 60px 28px 100px; }
+  .onboard-step { display: none; }
+  .onboard-step.active { display: block; animation: fadeIn 0.3s ease; }
+
+  .step-label {
+    font-size: 12px; font-weight: 600; color: var(--accent);
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px;
+  }
+  .onboard-title { font-size: 26px; font-weight: 800; margin-bottom: 8px; line-height: 1.2; }
+  .onboard-sub { font-size: 15px; color: var(--muted); margin-bottom: 36px; }
+
+  .tier-cards { display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px; }
+  .tier-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .tier-card:hover { border-color: var(--muted); }
+  .tier-card.selected { border-color: var(--accent); background: rgba(200,245,74,0.05); }
+  .tier-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .tier-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+  .tier-price { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--accent); }
+  .tier-price span { font-size: 13px; color: var(--muted); font-weight: 400; }
+  .tier-visits { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .tier-check {
+    position: absolute; top: 16px; right: 16px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); display: none;
+    align-items: center; justify-content: center;
+  }
+  .tier-card.selected .tier-check { display: flex; }
+  .tier-check svg { width: 12px; height: 12px; color: #0a0a0a; }
+
+  .tier-badge {
+    display: inline-block; padding: 3px 10px;
+    border-radius: 20px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+  .badge-basic { background: rgba(125,211,252,0.15); color: var(--basic); }
+  .badge-standard { background: rgba(192,132,252,0.15); color: var(--standard); }
+  .badge-unlimited { background: rgba(200,245,74,0.15); color: var(--unlimited); }
+
+  .pod-cards { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+  .pod-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .pod-card:hover { border-color: var(--muted); }
+  .pod-card.selected { border-color: var(--accent); background: rgba(200,245,74,0.05); }
+  .pod-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+  .pod-location { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .pod-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--border); transition: background 0.15s;
+  }
+  .pod-card.selected .pod-dot { background: var(--accent); }
+
+  /* ── ─────────────────── ── */
+  /* ── SCREEN: DASHBOARD   ── */
+  /* ── ─────────────────── ── */
+  #screen-dashboard { padding: 0 0 90px; }
+
+  .dash-header {
+    padding: 56px 28px 28px;
+    background: linear-gradient(180deg, #141414 0%, #0a0a0a 100%);
+    border-bottom: 1px solid var(--border);
+  }
+  .dash-greeting { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .dash-name { font-size: 24px; font-weight: 800; font-family: 'Syne', sans-serif; }
+
+  .visits-card {
+    margin: 24px 28px;
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 24px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .visits-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, rgba(200,245,74,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .visits-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .visits-count { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; line-height: 1; color: var(--accent); }
+  .visits-total { font-size: 18px; color: var(--muted); font-weight: 400; }
+  .visits-sub { font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+  .progress-bar {
+    width: 100%; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 16px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .dash-section { padding: 0 28px; margin-bottom: 24px; }
+  .dash-section-title {
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 14px;
+  }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .info-tile {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid var(--border);
+  }
+  .info-tile-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .info-tile-value { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+
+  .access-btn-wrap { padding: 0 28px; margin-bottom: 16px; }
+
+  /* ── ─────────────────── ── */
+  /* ── SCREEN: ACCESS      ── */
+  /* ── ─────────────────── ── */
+  #screen-access { padding: 56px 28px 90px; }
+  .access-header { margin-bottom: 36px; }
+  .access-title { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+  .access-sub { font-size: 15px; color: var(--muted); }
+
+  .pod-selector {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    width: 100%;
+    margin-bottom: 28px;
+    outline: none;
+    cursor: pointer;
+  }
+  .pod-selector:focus { border-color: var(--accent); }
+  option { background: var(--surface2); }
+
+  .code-display {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    margin-bottom: 24px;
+    display: none;
+  }
+  .code-display.show { display: block; animation: fadeIn 0.3s ease; }
+  .code-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
+  .code-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 48px; font-weight: 800;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .code-pod { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+  .code-timer { font-size: 13px; color: var(--muted); }
+  .code-timer span { color: var(--text); font-weight: 600; }
+
+  .visits-warning {
+    background: rgba(255,77,77,0.08);
+    border: 1px solid rgba(255,77,77,0.2);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 14px;
+    color: var(--danger);
+    margin-bottom: 20px;
+    display: none;
+  }
+  .visits-warning.show { display: block; }
+
+  .access-log { margin-top: 32px; }
+  .log-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-date { font-size: 14px; }
+  .log-pod { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .log-status {
+    font-size: 12px; font-weight: 600; padding: 4px 10px;
+    border-radius: 20px;
+  }
+  .log-granted { background: rgba(200,245,74,0.12); color: var(--accent); }
+  .log-denied { background: rgba(255,77,77,0.12); color: var(--danger); }
+
+  /* ── ─────────────────── ── */
+  /* ── SCREEN: PROFILE     ── */
+  /* ── ─────────────────── ── */
+  #screen-profile { padding: 56px 28px 90px; }
+
+  .profile-avatar {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 24px; font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+  .profile-name { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .profile-email { font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+
+  .profile-section { margin-bottom: 28px; }
+  .profile-section-title {
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+  .profile-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .profile-row:last-child { border-bottom: none; }
+  .profile-row-label { font-size: 14px; }
+  .profile-row-value { font-size: 14px; color: var(--muted); }
+
+  .membership-card {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .membership-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .membership-tier-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+  .membership-status {
+    font-size: 11px; font-weight: 600; padding: 4px 10px;
+    border-radius: 20px; background: rgba(200,245,74,0.12); color: var(--accent);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .membership-detail { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  /* ── LOADING ── */
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid rgba(200,245,74,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block; vertical-align: middle; margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; flex-direction: column; gap: 16px;
+  }
+  .loading-screen p { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SCREEN: AUTH                          -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-auth" class="screen active">
+  <div class="auth-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2C8 2 5 5 5 9v2H4a1 1 0 00-1 1v8a1 1 0 001 1h16a1 1 0 001-1v-8a1 1 0 00-1-1h-1V9c0-4-3-7-7-7z"/>
+      <circle cx="12" cy="16" r="1.5" fill="currentColor"/>
+    </svg>
+  </div>
+
+  <h1 class="auth-title">Recovery Pod</h1>
+  <p class="auth-sub">Your recovery, on your schedule.</p>
+
+  <div class="auth-tabs">
+    <button class="auth-tab active" onclick="switchAuthTab('login')">Log In</button>
+    <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+  </div>
+
+  <div id="error-auth" class="error-msg"></div>
+
+  <!-- Login form -->
+  <div id="form-login" class="auth-form">
+    <div class="input-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="you@example.com">
+    </div>
+    <div class="input-group">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="Your password">
+    </div>
+    <button class="btn btn-primary" onclick="handleLogin()" id="btn-login">Log In</button>
+  </div>
+
+  <!-- Sign up form -->
+  <div id="form-signup" class="auth-form hidden">
+    <div class="input-group">
+      <label>Full Name</label>
+      <input type="text" id="signup-name" placeholder="Your full name">
+    </div>
+    <div class="input-group">
+      <label>Email</label>
+      <input type="email" id="signup-email" placeholder="you@example.com">
+    </div>
+    <div class="input-group">
+      <label>Phone (optional)</label>
+      <input type="tel" id="signup-phone" placeholder="+44 7700 000000">
+    </div>
+    <div class="input-group">
+      <label>Password</label>
+      <input type="password" id="signup-password" placeholder="Create a password (min 6 chars)">
+    </div>
+    <button class="btn btn-primary" onclick="handleSignup()" id="btn-signup">Create Account</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SCREEN: ONBOARDING                   -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-onboarding" class="screen">
+
+  <!-- Step 1: Choose tier -->
+  <div id="step-tier" class="onboard-step active">
+    <p class="step-label">Step 1 of 2</p>
+    <h2 class="onboard-title">Choose your membership</h2>
+    <p class="onboard-sub">Select the plan that fits your recovery routine.</p>
+    <div id="tier-cards" class="tier-cards"></div>
+    <div id="error-tier" class="error-msg" style="margin-bottom:16px"></div>
+    <button class="btn btn-primary" onclick="goToStepPod()">Continue →</button>
+  </div>
+
+  <!-- Step 2: Choose pod -->
+  <div id="step-pod" class="onboard-step">
+    <p class="step-label">Step 2 of 2</p>
+    <h2 class="onboard-title">Choose your pod</h2>
+    <p class="onboard-sub">Pick your nearest Recovery Pod location.</p>
+    <div id="pod-cards" class="pod-cards"></div>
+    <div id="error-pod" class="error-msg" style="margin-bottom:16px"></div>
+    <button class="btn btn-primary" onclick="completeMembership()" id="btn-complete">Confirm Membership →</button>
+    <div style="height:12px"></div>
+    <button class="btn btn-outline" onclick="showOnboardStep('tier')">← Back</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SCREEN: DASHBOARD                    -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-dashboard" class="screen">
+  <div class="dash-header">
+    <p class="dash-greeting">Welcome back</p>
+    <h2 class="dash-name" id="dash-name">—</h2>
+  </div>
+
+  <div class="visits-card">
+    <p class="visits-label">Visits remaining this week</p>
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <span class="visits-count" id="visits-remaining">—</span>
+      <span class="visits-total" id="visits-total"></span>
+    </div>
+    <p class="visits-sub" id="visits-reset">Resets every Monday</p>
+    <div class="progress-bar"><div class="progress-fill" id="visits-progress" style="width:0%"></div></div>
+  </div>
+
+  <div class="access-btn-wrap">
+    <button class="btn btn-primary" onclick="showScreen('access')">Request Pod Access →</button>
+  </div>
+
+  <div class="dash-section">
+    <p class="dash-section-title">Your membership</p>
+    <div class="info-grid">
+      <div class="info-tile">
+        <p class="info-tile-label">Tier</p>
+        <p class="info-tile-value" id="dash-tier">—</p>
+      </div>
+      <div class="info-tile">
+        <p class="info-tile-label">Pod</p>
+        <p class="info-tile-value" id="dash-pod">—</p>
+      </div>
+      <div class="info-tile">
+        <p class="info-tile-label">Member since</p>
+        <p class="info-tile-value" id="dash-since">—</p>
+      </div>
+      <div class="info-tile">
+        <p class="info-tile-label">Status</p>
+        <p class="info-tile-value" style="color:var(--accent)">Active</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SCREEN: ACCESS                       -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-access" class="screen">
+  <div class="access-header">
+    <h2 class="access-title">Pod Access</h2>
+    <p class="access-sub">Generate your one-time entry code.</p>
+  </div>
+
+  <label style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">Select Pod</label>
+  <select class="pod-selector" id="access-pod-select"></select>
+
+  <div id="visits-warning" class="visits-warning">
+    You have no visits remaining this week. Your allowance resets every Monday.
+  </div>
+
+  <div id="error-access" class="error-msg" style="margin-bottom:16px"></div>
+
+  <button class="btn btn-primary" onclick="generateAccessCode()" id="btn-generate">Generate Access Code</button>
+
+  <div id="code-display" class="code-display">
+    <p class="code-label">Your entry code</p>
+    <p class="code-number" id="code-value">——</p>
+    <p class="code-pod" id="code-pod-name"></p>
+    <p class="code-timer">Expires in <span id="code-countdown">10:00</span></p>
+  </div>
+
+  <div class="access-log" id="access-log">
+    <p class="dash-section-title" style="margin-bottom:14px">Recent visits</p>
+    <div id="log-items"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SCREEN: PROFILE                      -->
+<!-- ══════════════════════════════════════ -->
+<div id="screen-profile" class="screen">
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px">
+    <div class="profile-avatar" id="profile-avatar">—</div>
+    <div>
+      <p class="profile-name" id="profile-name">—</p>
+      <p class="profile-email" id="profile-email">—</p>
+    </div>
+  </div>
+
+  <div class="membership-card">
+    <div class="membership-card-top">
+      <p class="membership-tier-name" id="profile-tier">—</p>
+      <span class="membership-status">Active</span>
+    </div>
+    <p class="membership-detail" id="profile-visits-detail">—</p>
+    <p class="membership-detail" id="profile-pod">—</p>
+  </div>
+
+  <div class="profile-section">
+    <p class="profile-section-title">Account details</p>
+    <div class="profile-row">
+      <span class="profile-row-label">Full name</span>
+      <span class="profile-row-value" id="profile-fullname">—</span>
+    </div>
+    <div class="profile-row">
+      <span class="profile-row-label">Email</span>
+      <span class="profile-row-value" id="profile-email-row">—</span>
+    </div>
+    <div class="profile-row">
+      <span class="profile-row-label">Phone</span>
+      <span class="profile-row-value" id="profile-phone">—</span>
+    </div>
+    <div class="profile-row">
+      <span class="profile-row-label">Member since</span>
+      <span class="profile-row-value" id="profile-since">—</span>
+    </div>
+  </div>
+
+  <button class="btn btn-danger" onclick="handleSignOut()" style="margin-top:8px">Sign Out</button>
+  <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:20px">Recovery Pod v1.0</p>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- BOTTOM NAV (shown when logged in)    -->
+<!-- ══════════════════════════════════════ -->
+<nav class="tab-bar" id="tab-bar" style="display:none">
+  <div class="tab-item active" onclick="showScreen('dashboard')" id="tab-dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+    </svg>
+    <span>Home</span>
+  </div>
+  <div class="tab-item" onclick="showScreen('access')" id="tab-access">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 8v4l3 3"/>
+    </svg>
+    <span>Access</span>
+  </div>
+  <div class="tab-item" onclick="showScreen('profile')" id="tab-profile">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
+    <span>Profile</span>
+  </div>
+</nav>
+
+<script>
+// ══════════════════════════════════════════
+// SUPABASE INIT
+// ══════════════════════════════════════════
+const { createClient } = supabase;
+const sb = createClient(
+  'https://nvxbkbiistmbsrjpvxlk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52eGJrYmlpc3RtYnNyanB2eGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4OTgwNjcsImV4cCI6MjA5NDQ3NDA2N30.dMi9mw1QaB0dcL0VWag2vVAyytKJNa5ZXUaJPlWO644'
+);
+
+// ══════════════════════════════════════════
+// APP STATE
+// ══════════════════════════════════════════
+let currentUser = null;
+let currentProfile = null;
+let currentMembership = null; // member_memberships row
+let currentTier = null;       // memberships row
+let currentPod = null;        // pods row
+let allPods = [];
+let allTiers = [];
+let selectedTierId = null;
+let selectedPodId = null;
+let codeTimer = null;
+
+// ══════════════════════════════════════════
+// INIT — check session on load
+// ══════════════════════════════════════════
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await loadUserData();
+  }
+})();
+
+// ══════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('form-login').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('form-signup').classList.toggle('hidden', tab !== 'signup');
+  hideError('auth');
+}
+
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  if (!email || !password) return showError('auth', 'Please enter your email and password.');
+
+  setLoading('btn-login', true, 'Logging in…');
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  setLoading('btn-login', false, 'Log In');
+
+  if (error) return showError('auth', error.message);
+  currentUser = data.user;
+  await loadUserData();
+}
+
+async function handleSignup() {
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const phone = document.getElementById('signup-phone').value.trim();
+  const password = document.getElementById('signup-password').value.trim();
+  if (!name || !email || !password) return showError('auth', 'Please fill in all required fields.');
+  if (password.length < 6) return showError('auth', 'Password must be at least 6 characters.');
+
+  setLoading('btn-signup', true, 'Creating account…');
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if (error) { setLoading('btn-signup', false, 'Create Account'); return showError('auth', error.message); }
+
+  const userId = data.user?.id;
+  const { error: profileError } = await sb.from('profiles').insert({
+    id: userId, full_name: name, email, phone: phone || null
+  });
+  setLoading('btn-signup', false, 'Create Account');
+
+  if (profileError) return showError('auth', 'Account created but profile failed: ' + profileError.message);
+
+  currentUser = data.user;
+  currentProfile = { id: userId, full_name: name, email, phone };
+  await loadTiersAndPods();
+  showScreen('onboarding');
+}
+
+async function handleSignOut() {
+  await sb.auth.signOut();
+  currentUser = null; currentProfile = null;
+  currentMembership = null; currentTier = null; currentPod = null;
+  document.getElementById('tab-bar').style.display = 'none';
+  showScreen('auth');
+}
+
+// ══════════════════════════════════════════
+// LOAD USER DATA
+// ══════════════════════════════════════════
+async function loadUserData() {
+  const uid = currentUser.id;
+
+  // Profile
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', uid).single();
+  currentProfile = profile;
+
+  // Active membership
+  const { data: membership } = await sb
+    .from('member_memberships')
+    .select('*, memberships(*), pods(*)')
+    .eq('profile_id', uid)
+    .eq('active', true)
+    .single();
+
+  if (!membership) {
+    // No membership yet — go to onboarding
+    await loadTiersAndPods();
+    showScreen('onboarding');
+    return;
+  }
+
+  currentMembership = membership;
+  currentTier = membership.memberships;
+  currentPod = membership.pods;
+
+  populateDashboard();
+  populateProfile();
+  await populateAccessScreen();
+
+  document.getElementById('tab-bar').style.display = 'flex';
+  showScreen('dashboard');
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+async function populateDashboard() {
+  document.getElementById('dash-name').textContent = currentProfile?.full_name?.split(' ')[0] || 'Member';
+  document.getElementById('dash-tier').textContent = currentTier?.name || '—';
+  document.getElementById('dash-pod').textContent = currentPod?.name || '—';
+
+  const since = currentMembership?.start_date
+    ? new Date(currentMembership.start_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+    : '—';
+  document.getElementById('dash-since').textContent = since;
+
+  // Count visits this week
+  const weekStart = getWeekStart();
+  const { data: logs } = await sb
+    .from('access_logs')
+    .select('id')
+    .eq('profile_id', currentUser.id)
+    .eq('granted', true)
+    .gte('accessed_at', weekStart.toISOString());
+
+  const used = logs?.length || 0;
+  const total = currentTier?.weekly_visits || 0;
+  const remaining = Math.max(0, total - used);
+  const isCapped = total < 99;
+
+  document.getElementById('visits-remaining').textContent = isCapped ? remaining : '∞';
+  document.getElementById('visits-total').textContent = isCapped ? `/ ${total}` : '';
+  document.getElementById('visits-reset').textContent = 'Resets every Monday';
+
+  const pct = isCapped && total > 0 ? ((total - remaining) / total) * 100 : 0;
+  document.getElementById('visits-progress').style.width = pct + '%';
+}
+
+// ══════════════════════════════════════════
+// ACCESS SCREEN
+// ══════════════════════════════════════════
+async function populateAccessScreen() {
+  // Populate pod dropdown
+  const select = document.getElementById('access-pod-select');
+  select.innerHTML = '';
+  allPods.forEach(pod => {
+    if (pod.active) {
+      const opt = document.createElement('option');
+      opt.value = pod.id;
+      opt.textContent = pod.name + (pod.location ? ` — ${pod.location}` : '');
+      if (currentPod && pod.id === currentPod.id) opt.selected = true;
+      select.appendChild(opt);
+    }
+  });
+
+  // Check remaining visits
+  const weekStart = getWeekStart();
+  const { data: logs } = await sb
+    .from('access_logs')
+    .select('id')
+    .eq('profile_id', currentUser.id)
+    .eq('granted', true)
+    .gte('accessed_at', weekStart.toISOString());
+
+  const used = logs?.length || 0;
+  const total = currentTier?.weekly_visits || 0;
+  const remaining = Math.max(0, total - used);
+  const isUnlimited = total >= 99;
+
+  document.getElementById('visits-warning').classList.toggle('show', !isUnlimited && remaining <= 0);
+
+  // Load recent logs
+  const { data: recentLogs } = await sb
+    .from('access_logs')
+    .select('*, pods(name)')
+    .eq('profile_id', currentUser.id)
+    .order('accessed_at', { ascending: false })
+    .limit(10);
+
+  const logContainer = document.getElementById('log-items');
+  logContainer.innerHTML = '';
+  if (recentLogs && recentLogs.length > 0) {
+    recentLogs.forEach(log => {
+      const date = new Date(log.accessed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      logContainer.innerHTML += `
+        <div class="log-item">
+          <div>
+            <p class="log-date">${date}</p>
+            <p class="log-pod">${log.pods?.name || '—'}</p>
+          </div>
+          <span class="log-status ${log.granted ? 'log-granted' : 'log-denied'}">${log.granted ? 'Granted' : 'Denied'}</span>
+        </div>`;
+    });
+  } else {
+    logContainer.innerHTML = '<p style="color:var(--muted);font-size:14px;padding:14px 0">No visits yet.</p>';
+  }
+}
+
+async function generateAccessCode() {
+  const podId = document.getElementById('access-pod-select').value;
+  if (!podId) return showError('access', 'Please select a pod.');
+
+  // Check visits remaining
+  const weekStart = getWeekStart();
+  const { data: logs } = await sb
+    .from('access_logs')
+    .select('id')
+    .eq('profile_id', currentUser.id)
+    .eq('granted', true)
+    .gte('accessed_at', weekStart.toISOString());
+
+  const used = logs?.length || 0;
+  const total = currentTier?.weekly_visits || 0;
+  const isUnlimited = total >= 99;
+  const granted = isUnlimited || used < total;
+
+  // Generate a 6-digit code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // Log the visit attempt
+  await sb.from('access_logs').insert({
+    profile_id: currentUser.id,
+    pod_id: podId,
+    granted,
+    visit_count_this_week: used + (granted ? 1 : 0)
+  });
+
+  if (!granted) {
+    document.getElementById('visits-warning').classList.add('show');
+    hideError('access');
+    return;
+  }
+
+  // Show the code
+  const podName = document.getElementById('access-pod-select').selectedOptions[0]?.text || '';
+  document.getElementById('code-value').textContent = code;
+  document.getElementById('code-pod-name').textContent = podName;
+  document.getElementById('code-display').classList.add('show');
+  hideError('access');
+
+  // 10 minute countdown
+  if (codeTimer) clearInterval(codeTimer);
+  let seconds = 600;
+  updateCountdown(seconds);
+  codeTimer = setInterval(() => {
+    seconds--;
+    updateCountdown(seconds);
+    if (seconds <= 0) {
+      clearInterval(codeTimer);
+      document.getElementById('code-value').textContent = '——';
+      document.getElementById('code-countdown').textContent = 'Expired';
+    }
+  }, 1000);
+
+  // Refresh dashboard + access screen counts
+  await populateDashboard();
+  await populateAccessScreen();
+}
+
+function updateCountdown(s) {
+  const m = Math.floor(s / 60).toString().padStart(2, '0');
+  const sec = (s % 60).toString().padStart(2, '0');
+  document.getElementById('code-countdown').textContent = `${m}:${sec}`;
+}
+
+// ══════════════════════════════════════════
+// PROFILE
+// ══════════════════════════════════════════
+function populateProfile() {
+  const name = currentProfile?.full_name || '—';
+  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  document.getElementById('profile-avatar').textContent = initials;
+  document.getElementById('profile-name').textContent = name;
+  document.getElementById('profile-email').textContent = currentProfile?.email || '—';
+  document.getElementById('profile-fullname').textContent = name;
+  document.getElementById('profile-email-row').textContent = currentProfile?.email || '—';
+  document.getElementById('profile-phone').textContent = currentProfile?.phone || 'Not set';
+  document.getElementById('profile-tier').textContent = currentTier?.name || '—';
+  document.getElementById('profile-visits-detail').textContent =
+    currentTier ? `${currentTier.weekly_visits >= 99 ? 'Unlimited' : currentTier.weekly_visits + 'x'} visits per week` : '—';
+  document.getElementById('profile-pod').textContent = currentPod ? `Pod: ${currentPod.name}` : '—';
+
+  const since = currentMembership?.start_date
+    ? new Date(currentMembership.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '—';
+  document.getElementById('profile-since').textContent = since;
+}
+
+// ══════════════════════════════════════════
+// ONBOARDING
+// ══════════════════════════════════════════
+async function loadTiersAndPods() {
+  const { data: tiers } = await sb.from('memberships').select('*').order('weekly_visits');
+  const { data: pods } = await sb.from('pods').select('*').eq('active', true);
+  allTiers = tiers || [];
+  allPods = pods || [];
+  renderTierCards();
+  renderPodCards();
+
+  // Populate access pod select
+  const select = document.getElementById('access-pod-select');
+  select.innerHTML = '';
+  allPods.forEach(pod => {
+    const opt = document.createElement('option');
+    opt.value = pod.id;
+    opt.textContent = pod.name + (pod.location ? ` — ${pod.location}` : '');
+    select.appendChild(opt);
+  });
+}
+
+function renderTierCards() {
+  const container = document.getElementById('tier-cards');
+  container.innerHTML = '';
+  const badgeClass = { Basic: 'badge-basic', Standard: 'badge-standard', Unlimited: 'badge-unlimited' };
+  allTiers.forEach(tier => {
+    const visits = tier.weekly_visits >= 99 ? 'Unlimited visits' : `${tier.weekly_visits}x visits per week`;
+    const price = tier.price_monthly ? `£${tier.price_monthly}` : 'TBC';
+    const badge = badgeClass[tier.name] || 'badge-basic';
+    container.innerHTML += `
+      <div class="tier-card" id="tier-${tier.id}" onclick="selectTier('${tier.id}')">
+        <span class="tier-badge ${badge}">${tier.name}</span>
+        <div class="tier-card-header">
+          <p class="tier-name">${tier.name}</p>
+          <p class="tier-price">${price}<span>/mo</span></p>
+        </div>
+        <p class="tier-visits">${visits}</p>
+        <div class="tier-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+      </div>`;
+  });
+}
+
+function renderPodCards() {
+  const container = document.getElementById('pod-cards');
+  container.innerHTML = '';
+  allPods.forEach(pod => {
+    container.innerHTML += `
+      <div class="pod-card" id="pod-${pod.id}" onclick="selectPod('${pod.id}')">
+        <div>
+          <p class="pod-name">${pod.name}</p>
+          <p class="pod-location">${pod.location || 'Location TBC'}</p>
+        </div>
+        <div class="pod-dot"></div>
+      </div>`;
+  });
+}
+
+function selectTier(id) {
+  selectedTierId = id;
+  document.querySelectorAll('.tier-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('tier-' + id)?.classList.add('selected');
+  hideError('tier');
+}
+
+function selectPod(id) {
+  selectedPodId = id;
+  document.querySelectorAll('.pod-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('pod-' + id)?.classList.add('selected');
+  hideError('pod');
+}
+
+function goToStepPod() {
+  if (!selectedTierId) return showError('tier', 'Please select a membership tier.');
+  showOnboardStep('pod');
+}
+
+async function completeMembership() {
+  if (!selectedPodId) return showError('pod', 'Please select a pod.');
+
+  setLoading('btn-complete', true, 'Saving…');
+  const { error } = await sb.from('member_memberships').insert({
+    profile_id: currentUser.id,
+    membership_id: selectedTierId,
+    pod_id: selectedPodId,
+    start_date: new Date().toISOString().split('T')[0],
+    active: true
+  });
+  setLoading('btn-complete', false, 'Confirm Membership →');
+
+  if (error) return showError('pod', 'Something went wrong: ' + error.message);
+
+  await loadUserData();
+}
+
+function showOnboardStep(step) {
+  document.querySelectorAll('.onboard-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-' + step)?.classList.add('active');
+}
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name)?.classList.add('active');
+
+  // Update tab bar
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById('tab-' + name);
+  if (tab) tab.classList.add('active');
+
+  // Refresh data when switching to access screen
+  if (name === 'access' && currentUser) populateAccessScreen();
+}
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function getWeekStart() {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = (day === 0 ? -6 : 1 - day); // Monday
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
+function showError(id, msg) {
+  const el = document.getElementById('error-' + id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function hideError(id) {
+  const el = document.getElementById('error-' + id);
+  if (el) el.classList.remove('show');
+}
+
+function setLoading(btnId, loading, label) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.innerHTML = loading ? `<span class="spinner"></span>${label}` : label;
+}
+</script>
+</body>
+</html>
