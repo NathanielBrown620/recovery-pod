@@ -788,16 +788,19 @@ async function loadUserData() {
   const uid = currentUser.id;
 
   // Profile
-  const { data: profile } = await sb.from('profiles').select('*').eq('id', uid).single();
+  const { data: profile, error: profileError } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
+  console.log('Profile load:', profile, profileError);
   currentProfile = profile;
 
   // Active membership
-  const { data: membership } = await sb
+  const { data: membership, error: memError } = await sb
     .from('member_memberships')
     .select('*, memberships(*), pods(*)')
     .eq('profile_id', uid)
     .eq('active', true)
-    .single();
+    .maybeSingle();
+  
+  console.log('Membership load:', membership, memError);
 
   if (!membership) {
     // No membership yet — go to onboarding
@@ -1094,18 +1097,30 @@ function goToStepPod() {
 
 async function completeMembership() {
   if (!selectedPodId) return showError('pod', 'Please select a pod.');
+  if (!selectedTierId) return showError('pod', 'No tier selected. Please go back and select a tier.');
+  if (!currentUser) return showError('pod', 'Not logged in. Please refresh and log in again.');
+
+  console.log('Saving membership:', { 
+    profile_id: currentUser.id, 
+    membership_id: selectedTierId, 
+    pod_id: selectedPodId 
+  });
 
   setLoading('btn-complete', true, 'Saving…');
-  const { error } = await sb.from('member_memberships').insert({
+  const { data, error } = await sb.from('member_memberships').insert({
     profile_id: currentUser.id,
     membership_id: selectedTierId,
     pod_id: selectedPodId,
     start_date: new Date().toISOString().split('T')[0],
     active: true
-  });
+  }).select();
+  
   setLoading('btn-complete', false, 'Confirm Membership →');
 
-  if (error) return showError('pod', 'Something went wrong: ' + error.message);
+  console.log('Insert result:', data, error);
+
+  if (error) return showError('pod', 'Error: ' + error.message + ' (code: ' + error.code + ')');
+  if (!data || data.length === 0) return showError('pod', 'Membership was not saved. Check Supabase RLS policies.');
 
   await loadUserData();
 }
