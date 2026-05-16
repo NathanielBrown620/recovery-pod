@@ -42,6 +42,10 @@ input::placeholder { color:var(--muted); }
 .error-msg { background:rgba(255,77,77,0.1); border:1px solid rgba(255,77,77,0.3); color:var(--danger); padding:12px 16px; border-radius:10px; font-size:13px; display:none; }
 .error-msg.show { display:block; }
 
+/* SUCCESS */
+.success-msg { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:var(--accent); padding:12px 16px; border-radius:10px; font-size:13px; display:none; }
+.success-msg.show { display:block; }
+
 /* NAV */
 .tab-bar { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; background:var(--surface); border-top:1px solid var(--border); display:flex; padding:12px 0 20px; z-index:100; }
 .tab-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; opacity:0.4; transition:opacity 0.15s; font-size:11px; font-weight:500; }
@@ -68,7 +72,7 @@ input::placeholder { color:var(--muted); }
 
 .tier-cards { display:flex; flex-direction:column; gap:14px; margin-bottom:32px; }
 .tier-card { background:var(--surface); border:2px solid var(--border); border-radius:16px; padding:20px; cursor:pointer; transition:all 0.15s; }
-.tier-card.selected { border-color:var(--accent); background:rgba(200,245,74,0.05); }
+.tier-card.selected { border-color:var(--accent); background:rgba(255,255,255,0.03); }
 .tier-card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
 .tier-name { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; }
 .tier-price { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--accent); }
@@ -81,11 +85,17 @@ input::placeholder { color:var(--muted); }
 
 .pod-cards { display:flex; flex-direction:column; gap:12px; margin-bottom:32px; }
 .pod-card { background:var(--surface); border:2px solid var(--border); border-radius:14px; padding:18px 20px; cursor:pointer; transition:all 0.15s; display:flex; justify-content:space-between; align-items:center; }
-.pod-card.selected { border-color:var(--accent); background:rgba(200,245,74,0.05); }
+.pod-card.selected { border-color:var(--accent); background:rgba(255,255,255,0.03); }
 .pod-name { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; }
 .pod-location { font-size:13px; color:var(--muted); margin-top:2px; }
 .pod-dot { width:10px; height:10px; border-radius:50%; background:var(--border); transition:background 0.15s; }
 .pod-card.selected .pod-dot { background:var(--accent); }
+
+/* PAYMENT PENDING SCREEN */
+#screen-payment { padding:60px 28px 40px; text-align:center; }
+.payment-icon { width:72px; height:72px; background:var(--surface2); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 24px; }
+.payment-title { font-size:24px; font-weight:800; margin-bottom:12px; }
+.payment-sub { font-size:15px; color:var(--muted); margin-bottom:36px; line-height:1.6; }
 
 /* DASHBOARD */
 #screen-dashboard { padding:0 0 90px; }
@@ -111,9 +121,6 @@ input::placeholder { color:var(--muted); }
 #screen-access { padding:56px 28px 90px; }
 .access-title { font-size:26px; font-weight:800; margin-bottom:6px; }
 .access-sub { font-size:15px; color:var(--muted); margin-bottom:28px; }
-.pod-selector { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px 16px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:15px; width:100%; margin-bottom:20px; outline:none; }
-.pod-selector:focus { border-color:var(--accent); }
-option { background:var(--surface2); }
 .visits-warning { background:rgba(255,77,77,0.08); border:1px solid rgba(255,77,77,0.2); border-radius:12px; padding:14px 16px; font-size:14px; color:var(--danger); margin-bottom:20px; display:none; }
 .visits-warning.show { display:block; }
 .code-display { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:32px 24px; text-align:center; margin-top:24px; display:none; }
@@ -129,7 +136,7 @@ option { background:var(--surface2); }
 .log-date { font-size:14px; }
 .log-pod { font-size:12px; color:var(--muted); margin-top:2px; }
 .log-status { font-size:12px; font-weight:600; padding:4px 10px; border-radius:20px; }
-.log-granted { background:rgba(200,245,74,0.12); color:var(--accent); }
+.log-granted { background:rgba(255,255,255,0.08); color:var(--accent); }
 .log-denied { background:rgba(255,77,77,0.12); color:var(--danger); }
 
 /* PROFILE */
@@ -141,7 +148,7 @@ option { background:var(--surface2); }
 .membership-card { background:var(--surface); border-radius:16px; padding:20px; border:1px solid var(--border); margin-bottom:28px; }
 .membership-card-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
 .membership-tier-name { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; }
-.membership-status { font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; background:rgba(200,245,74,0.12); color:var(--accent); text-transform:uppercase; }
+.membership-status { font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; background:rgba(255,255,255,0.08); color:var(--accent); text-transform:uppercase; }
 .membership-detail { font-size:13px; color:var(--muted); margin-top:4px; }
 .profile-section { margin-bottom:28px; }
 .profile-section-title { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px; }
@@ -152,7 +159,7 @@ option { background:var(--surface2); }
 
 /* SPINNER */
 .spinner { width:18px; height:18px; border:2px solid rgba(10,10,10,0.3); border-top-color:#0a0a0a; border-radius:50%; animation:spin 0.7s linear infinite; display:inline-block; vertical-align:middle; margin-right:6px; }
-.spinner-light { border-color:rgba(200,245,74,0.2); border-top-color:var(--accent); }
+.spinner-light { border-color:rgba(255,255,255,0.2); border-top-color:var(--accent); }
 @keyframes spin { to { transform:rotate(360deg); } }
 </style>
 </head>
@@ -199,10 +206,25 @@ option { background:var(--surface2); }
     <p class="onboard-sub">Pick your nearest Recovery Pod location.</p>
     <div id="pod-cards" class="pod-cards"></div>
     <div id="error-pod" class="error-msg" style="margin-bottom:16px"></div>
-    <button class="btn btn-primary" id="btn-complete" onclick="completeMembership()">Confirm Membership →</button>
+    <button class="btn btn-primary" id="btn-complete" onclick="proceedToPayment()">Continue to Payment →</button>
     <div style="height:12px"></div>
     <button class="btn btn-outline" onclick="showOnboardStep('tier')">← Back</button>
   </div>
+</div>
+
+<!-- PAYMENT PENDING -->
+<div id="screen-payment" class="screen">
+  <div class="payment-icon">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+  </div>
+  <h2 class="payment-title">Complete your payment</h2>
+  <p class="payment-sub">You'll be redirected to our secure payment page.<br>Once paid, your membership activates instantly.</p>
+  <div id="error-payment" class="error-msg" style="margin-bottom:16px"></div>
+  <div id="success-payment" class="success-msg" style="margin-bottom:16px"></div>
+  <button class="btn btn-primary" id="btn-pay" onclick="startCheckout()">Pay with Stripe →</button>
+  <div style="height:12px"></div>
+  <button class="btn btn-outline" onclick="showScreen('onboarding')">← Back</button>
+  <p style="margin-top:24px;font-size:12px;color:var(--muted)">Secured by Stripe. Cancel anytime.</p>
 </div>
 
 <!-- DASHBOARD -->
@@ -311,6 +333,15 @@ const sb = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52eGJrYmlpc3RtYnNyanB2eGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4OTgwNjcsImV4cCI6MjA5NDQ3NDA2N30.dMi9mw1QaB0dcL0VWag2vVAyytKJNa5ZXUaJPlWO644'
 );
 
+// Stripe price IDs per tier name
+const STRIPE_PRICES = {
+  'Basic':     'price_1TXmrTEC2qQlEnMeIMbTsWHc',
+  'Standard':  'price_1TXmriEC2qQlEnMesE2RzJe4',
+  'Unlimited': 'price_1TXms5EC2qQlEnMewFaFnDlt'
+};
+
+const SUPABASE_FUNCTIONS_URL = 'https://nvxbkbiistmbsrjpvxlk.supabase.co/functions/v1';
+
 let currentUser = null;
 let currentProfile = null;
 let currentMembership = null;
@@ -320,18 +351,76 @@ let allPods = [];
 let allTiers = [];
 let selectedTierId = null;
 let selectedPodId = null;
+let pendingMembershipId = null;
 let codeTimer = null;
 
 // ── INIT ──
 (async () => {
+  // Check for payment return
+  const params = new URLSearchParams(window.location.search);
+  const paymentStatus = params.get('payment');
+
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
     currentUser = session.user;
-    await loadUserData();
+
+    if (paymentStatus === 'success') {
+      // Payment done — poll for webhook to activate membership
+      await handlePaymentSuccess();
+    } else if (paymentStatus === 'cancelled') {
+      await loadUserData();
+      // Show cancelled message on payment screen
+      showScreen('payment');
+      showError('payment', 'Payment was cancelled. Please try again.');
+    } else {
+      await loadUserData();
+    }
   } else {
     showScreen('auth');
   }
+
+  // Clean URL
+  if (paymentStatus) {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
 })();
+
+// ── PAYMENT SUCCESS HANDLER ──
+async function handlePaymentSuccess() {
+  // Poll Supabase for up to 10 seconds waiting for webhook to activate membership
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  const poll = async () => {
+    const { data: mm } = await sb.from('member_memberships')
+      .select('*')
+      .eq('profile_id', currentUser.id)
+      .eq('active', true)
+      .maybeSingle();
+
+    if (mm) {
+      // Membership is active — load and go to dashboard
+      await loadUserData();
+    } else {
+      attempts++;
+      if (attempts < maxAttempts) {
+        setTimeout(poll, 1000);
+      } else {
+        // Webhook may be slow — show success anyway and ask them to refresh
+        showScreen('payment');
+        document.getElementById('success-payment').textContent = '✓ Payment received! Your membership is activating. Please refresh in a moment.';
+        document.getElementById('success-payment').classList.add('show');
+        document.getElementById('btn-pay').style.display = 'none';
+      }
+    }
+  };
+
+  showScreen('payment');
+  document.getElementById('success-payment').textContent = 'Payment confirmed — activating your membership...';
+  document.getElementById('success-payment').classList.add('show');
+  document.getElementById('btn-pay').style.display = 'none';
+  await poll();
+}
 
 // ── AUTH ──
 function switchAuthTab(tab) {
@@ -365,10 +454,8 @@ async function handleSignup() {
   const { data, error } = await sb.auth.signUp({ email, password });
   if (error) { setLoading('btn-signup', false, 'Create Account'); return showError('auth', error.message); }
   currentUser = data.user;
-  // Create profile row
   await sb.from('profiles').insert({ id: currentUser.id, full_name: name, email, phone: phone || null });
   setLoading('btn-signup', false, 'Create Account');
-  // Go to onboarding
   await loadTiersAndPods();
   showScreen('onboarding');
   document.getElementById('tab-bar').style.display = 'none';
@@ -386,19 +473,16 @@ async function handleSignOut() {
 async function loadUserData() {
   const uid = currentUser.id;
 
-  // Load profile — create one if missing
   const { data: profile } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
   if (profile) {
     currentProfile = profile;
   } else {
-    // Auto-create profile from auth metadata
     const meta = currentUser.user_metadata || {};
     const newProfile = { id: uid, full_name: meta.full_name || currentUser.email.split('@')[0], email: currentUser.email, phone: null };
     await sb.from('profiles').insert(newProfile);
     currentProfile = newProfile;
   }
 
-  // Load active membership with tier and pod details
   const { data: mm } = await sb.from('member_memberships').select('*').eq('profile_id', uid).eq('active', true).maybeSingle();
 
   if (!mm) {
@@ -408,7 +492,6 @@ async function loadUserData() {
     return;
   }
 
-  // Load tier and pod separately to avoid join issues
   const { data: tier } = await sb.from('memberships').select('*').eq('id', mm.membership_id).maybeSingle();
   const { data: pod } = await sb.from('pods').select('*').eq('id', mm.pod_id).maybeSingle();
 
@@ -424,124 +507,7 @@ async function loadUserData() {
   showScreen('dashboard');
 }
 
-// ── DASHBOARD ──
-async function populateDashboard() {
-  document.getElementById('dash-name').textContent = (currentProfile?.full_name || 'Member').split(' ')[0];
-  document.getElementById('dash-tier').textContent = currentTier?.name || '—';
-  document.getElementById('dash-pod').textContent = currentPod?.name || '—';
-  const since = currentMembership?.start_date ? new Date(currentMembership.start_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '—';
-  document.getElementById('dash-since').textContent = since;
-
-  const weekStart = getWeekStart();
-  const { data: logs } = await sb.from('access_logs').select('id').eq('profile_id', currentUser.id).eq('granted', true).gte('accessed_at', weekStart.toISOString());
-  const used = logs?.length || 0;
-  const total = currentTier?.weekly_visits || 0;
-  const isUnlimited = total >= 99;
-  const remaining = isUnlimited ? 99 : Math.max(0, total - used);
-
-  document.getElementById('visits-remaining').textContent = isUnlimited ? '∞' : remaining;
-  document.getElementById('visits-total').textContent = isUnlimited ? '' : '/ ' + total;
-  const pct = (!isUnlimited && total > 0) ? ((total - remaining) / total) * 100 : 0;
-  document.getElementById('visits-progress').style.width = pct + '%';
-}
-
-// ── PROFILE ──
-function populateProfile() {
-  const name = currentProfile?.full_name || '—';
-  document.getElementById('profile-avatar').textContent = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  document.getElementById('profile-name').textContent = name;
-  document.getElementById('profile-email-display').textContent = currentProfile?.email || '—';
-  document.getElementById('profile-tier').textContent = currentTier?.name || '—';
-  document.getElementById('profile-visits-detail').textContent = currentTier ? ((currentTier.weekly_visits >= 99 ? 'Unlimited' : currentTier.weekly_visits + 'x') + ' visits per week') : '—';
-  document.getElementById('profile-pod').textContent = currentPod ? 'Pod: ' + currentPod.name : '—';
-  document.getElementById('p-fullname').textContent = name;
-  document.getElementById('p-email').textContent = currentProfile?.email || '—';
-  document.getElementById('p-phone').textContent = currentProfile?.phone || 'Not set';
-  document.getElementById('p-since').textContent = currentMembership?.start_date ? new Date(currentMembership.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
-}
-
-// ── ACCESS ──
-async function loadPodsForAccessScreen() {
-  // Just display the member's assigned pod — no selection needed
-  const podName = currentPod?.name || 'Your pod';
-  const el = document.getElementById('access-pod-name');
-  if (el) el.textContent = podName;
-}
-
-async function populateAccessScreen() {
-  await loadPodsForAccessScreen();
-  const weekStart = getWeekStart();
-  const { data: logs } = await sb.from('access_logs').select('id').eq('profile_id', currentUser.id).eq('granted', true).gte('accessed_at', weekStart.toISOString());
-  const used = logs?.length || 0;
-  const total = currentTier?.weekly_visits || 0;
-  const isUnlimited = total >= 99;
-  const remaining = isUnlimited ? 99 : Math.max(0, total - used);
-  document.getElementById('visits-warning').classList.toggle('show', !isUnlimited && remaining <= 0);
-
-  const { data: recentLogs } = await sb.from('access_logs').select('*, pods(name)').eq('profile_id', currentUser.id).order('accessed_at', { ascending: false }).limit(10);
-  const logContainer = document.getElementById('log-items');
-  logContainer.innerHTML = '';
-  if (recentLogs && recentLogs.length > 0) {
-    recentLogs.forEach(log => {
-      const date = new Date(log.accessed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-      const div = document.createElement('div');
-      div.className = 'log-item';
-      div.innerHTML = '<div><p class="log-date">' + date + '</p><p class="log-pod">' + (log.pods?.name || '—') + '</p></div>' +
-        '<span class="log-status ' + (log.granted ? 'log-granted' : 'log-denied') + '">' + (log.granted ? 'Granted' : 'Denied') + '</span>';
-      logContainer.appendChild(div);
-    });
-  } else {
-    logContainer.innerHTML = '<p style="color:var(--muted);font-size:14px;padding:14px 0">No visits yet.</p>';
-  }
-}
-
-async function generateAccessCode() {
-  const podId = currentPod?.id;
-  if (!podId) return showError('access', 'No pod assigned to your membership.');
-  const weekStart = getWeekStart();
-  const { data: logs } = await sb.from('access_logs').select('id').eq('profile_id', currentUser.id).eq('granted', true).gte('accessed_at', weekStart.toISOString());
-  const used = logs?.length || 0;
-  const total = currentTier?.weekly_visits || 0;
-  const isUnlimited = total >= 99;
-  const granted = isUnlimited || used < total;
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  await sb.from('access_logs').insert({ profile_id: currentUser.id, pod_id: podId, granted, visit_count_this_week: used + (granted ? 1 : 0) });
-  if (!granted) { document.getElementById('visits-warning').classList.add('show'); return; }
-  const podName = currentPod?.name || '';
-  document.getElementById('code-value').textContent = code;
-  document.getElementById('code-pod-name').textContent = podName;
-  document.getElementById('code-display').classList.add('show');
-  hideError('access');
-  if (codeTimer) clearInterval(codeTimer);
-  let seconds = 600;
-  updateCountdown(seconds);
-  // Disable generate button during countdown
-  const genBtn = document.getElementById('btn-generate');
-  genBtn.disabled = true;
-  genBtn.textContent = 'Code active — wait for expiry';
-  codeTimer = setInterval(() => {
-    seconds--;
-    updateCountdown(seconds);
-    if (seconds <= 0) {
-      clearInterval(codeTimer);
-      document.getElementById('code-value').textContent = 'Expired';
-      document.getElementById('code-countdown').textContent = 'Expired';
-      genBtn.disabled = false;
-      genBtn.textContent = 'Generate Access Code';
-      document.getElementById('code-display').classList.remove('show');
-    }
-  }, 1000);
-  await populateDashboard();
-  await populateAccessScreen();
-}
-
-function updateCountdown(s) {
-  const m = Math.floor(s / 60).toString().padStart(2, '0');
-  const sec = (s % 60).toString().padStart(2, '0');
-  document.getElementById('code-countdown').textContent = m + ':' + sec;
-}
-
-// ── ONBOARDING ──
+// ── ONBOARDING + STRIPE ──
 async function loadTiersAndPods() {
   const { data: tiers } = await sb.from('memberships').select('*').order('weekly_visits');
   const { data: pods } = await sb.from('pods').select('*').eq('active', true);
@@ -598,26 +564,189 @@ function goToStepPod() {
   showOnboardStep('pod');
 }
 
-async function completeMembership() {
+async function proceedToPayment() {
   if (!selectedPodId) return showError('pod', 'Please select a pod.');
   if (!selectedTierId) return showError('pod', 'No tier selected — please go back.');
   if (!currentUser) return showError('pod', 'Not logged in. Please refresh.');
-  setLoading('btn-complete', true, 'Saving...');
-  const { error } = await sb.from('member_memberships').insert({
+
+  setLoading('btn-complete', true, 'Preparing payment...');
+
+  // Create a pending membership row (inactive until Stripe webhook fires)
+  const { data: mm, error } = await sb.from('member_memberships').insert({
     profile_id: currentUser.id,
     membership_id: selectedTierId,
     pod_id: selectedPodId,
     start_date: new Date().toISOString().split('T')[0],
-    active: true
-  });
-  setLoading('btn-complete', false, 'Confirm Membership →');
-  if (error) return showError('pod', 'Error: ' + error.message);
-  await loadUserData();
+    active: false
+  }).select().single();
+
+  setLoading('btn-complete', false, 'Continue to Payment →');
+
+  if (error) return showError('pod', 'Error saving selection: ' + error.message);
+  pendingMembershipId = mm.id;
+
+  showScreen('payment');
+}
+
+async function startCheckout() {
+  if (!selectedTierId || !selectedPodId || !currentUser) {
+    return showError('payment', 'Missing details. Please go back and try again.');
+  }
+
+  const tier = allTiers.find(t => t.id === selectedTierId);
+  if (!tier) return showError('payment', 'Could not find selected tier.');
+
+  const priceId = STRIPE_PRICES[tier.name];
+  if (!priceId) return showError('payment', 'No Stripe price found for this tier.');
+
+  setLoading('btn-pay', true, 'Redirecting to payment...');
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const res = await fetch(SUPABASE_FUNCTIONS_URL + '/create-checkout-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token
+      },
+      body: JSON.stringify({
+        priceId,
+        userId: currentUser.id,
+        membershipId: selectedTierId,
+        podId: selectedPodId
+      })
+    });
+
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+    if (json.url) {
+      window.location.href = json.url;
+    } else {
+      throw new Error('No checkout URL returned.');
+    }
+  } catch (err) {
+    setLoading('btn-pay', false, 'Pay with Stripe →');
+    showError('payment', 'Payment error: ' + err.message);
+  }
 }
 
 function showOnboardStep(step) {
   document.querySelectorAll('.onboard-step').forEach(s => s.classList.remove('active'));
   document.getElementById('step-' + step).classList.add('active');
+}
+
+// ── DASHBOARD ──
+async function populateDashboard() {
+  document.getElementById('dash-name').textContent = (currentProfile?.full_name || 'Member').split(' ')[0];
+  document.getElementById('dash-tier').textContent = currentTier?.name || '—';
+  document.getElementById('dash-pod').textContent = currentPod?.name || '—';
+  const since = currentMembership?.start_date ? new Date(currentMembership.start_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '—';
+  document.getElementById('dash-since').textContent = since;
+
+  const weekStart = getWeekStart();
+  const { data: logs } = await sb.from('access_logs').select('id').eq('profile_id', currentUser.id).eq('granted', true).gte('accessed_at', weekStart.toISOString());
+  const used = logs?.length || 0;
+  const total = currentTier?.weekly_visits || 0;
+  const isUnlimited = total >= 99;
+  const remaining = isUnlimited ? 99 : Math.max(0, total - used);
+
+  document.getElementById('visits-remaining').textContent = isUnlimited ? '∞' : remaining;
+  document.getElementById('visits-total').textContent = isUnlimited ? '' : '/ ' + total;
+  const pct = (!isUnlimited && total > 0) ? ((total - remaining) / total) * 100 : 0;
+  document.getElementById('visits-progress').style.width = pct + '%';
+}
+
+// ── PROFILE ──
+function populateProfile() {
+  const name = currentProfile?.full_name || '—';
+  document.getElementById('profile-avatar').textContent = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  document.getElementById('profile-name').textContent = name;
+  document.getElementById('profile-email-display').textContent = currentProfile?.email || '—';
+  document.getElementById('profile-tier').textContent = currentTier?.name || '—';
+  document.getElementById('profile-visits-detail').textContent = currentTier ? ((currentTier.weekly_visits >= 99 ? 'Unlimited' : currentTier.weekly_visits + 'x') + ' visits per week') : '—';
+  document.getElementById('profile-pod').textContent = currentPod ? 'Pod: ' + currentPod.name : '—';
+  document.getElementById('p-fullname').textContent = name;
+  document.getElementById('p-email').textContent = currentProfile?.email || '—';
+  document.getElementById('p-phone').textContent = currentProfile?.phone || 'Not set';
+  document.getElementById('p-since').textContent = currentMembership?.start_date ? new Date(currentMembership.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+}
+
+// ── ACCESS ──
+async function loadPodsForAccessScreen() {
+  const podName = currentPod?.name || 'Your pod';
+  const el = document.getElementById('access-pod-name');
+  if (el) el.textContent = podName;
+}
+
+async function populateAccessScreen() {
+  await loadPodsForAccessScreen();
+  const weekStart = getWeekStart();
+  const { data: logs } = await sb.from('access_logs').select('id').eq('profile_id', currentUser.id).eq('granted', true).gte('accessed_at', weekStart.toISOString());
+  const used = logs?.length || 0;
+  const total = currentTier?.weekly_visits || 0;
+  const isUnlimited = total >= 99;
+  const remaining = isUnlimited ? 99 : Math.max(0, total - used);
+  document.getElementById('visits-warning').classList.toggle('show', !isUnlimited && remaining <= 0);
+
+  const { data: recentLogs } = await sb.from('access_logs').select('*, pods(name)').eq('profile_id', currentUser.id).order('accessed_at', { ascending: false }).limit(10);
+  const logContainer = document.getElementById('log-items');
+  logContainer.innerHTML = '';
+  if (recentLogs && recentLogs.length > 0) {
+    recentLogs.forEach(log => {
+      const date = new Date(log.accessed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      const div = document.createElement('div');
+      div.className = 'log-item';
+      div.innerHTML = '<div><p class="log-date">' + date + '</p><p class="log-pod">' + (log.pods?.name || '—') + '</p></div>' +
+        '<span class="log-status ' + (log.granted ? 'log-granted' : 'log-denied') + '">' + (log.granted ? 'Granted' : 'Denied') + '</span>';
+      logContainer.appendChild(div);
+    });
+  } else {
+    logContainer.innerHTML = '<p style="color:var(--muted);font-size:14px;padding:14px 0">No visits yet.</p>';
+  }
+}
+
+async function generateAccessCode() {
+  const podId = currentPod?.id;
+  if (!podId) return showError('access', 'No pod assigned to your membership.');
+  const weekStart = getWeekStart();
+  const { data: logs } = await sb.from('access_logs').select('id').eq('profile_id', currentUser.id).eq('granted', true).gte('accessed_at', weekStart.toISOString());
+  const used = logs?.length || 0;
+  const total = currentTier?.weekly_visits || 0;
+  const isUnlimited = total >= 99;
+  const granted = isUnlimited || used < total;
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  await sb.from('access_logs').insert({ profile_id: currentUser.id, pod_id: podId, granted, visit_count_this_week: used + (granted ? 1 : 0) });
+  if (!granted) { document.getElementById('visits-warning').classList.add('show'); return; }
+  document.getElementById('code-value').textContent = code;
+  document.getElementById('code-pod-name').textContent = currentPod?.name || '';
+  document.getElementById('code-display').classList.add('show');
+  hideError('access');
+  if (codeTimer) clearInterval(codeTimer);
+  let seconds = 600;
+  updateCountdown(seconds);
+  const genBtn = document.getElementById('btn-generate');
+  genBtn.disabled = true;
+  genBtn.textContent = 'Code active — wait for expiry';
+  codeTimer = setInterval(() => {
+    seconds--;
+    updateCountdown(seconds);
+    if (seconds <= 0) {
+      clearInterval(codeTimer);
+      document.getElementById('code-value').textContent = 'Expired';
+      document.getElementById('code-countdown').textContent = 'Expired';
+      genBtn.disabled = false;
+      genBtn.textContent = 'Generate Access Code';
+      document.getElementById('code-display').classList.remove('show');
+    }
+  }, 1000);
+  await populateDashboard();
+  await populateAccessScreen();
+}
+
+function updateCountdown(s) {
+  const m = Math.floor(s / 60).toString().padStart(2, '0');
+  const sec = (s % 60).toString().padStart(2, '0');
+  document.getElementById('code-countdown').textContent = m + ':' + sec;
 }
 
 // ── NAVIGATION ──
