@@ -1030,21 +1030,24 @@ function renderTierCards() {
   container.innerHTML = '';
   const badgeClass = { Basic: 'badge-basic', Standard: 'badge-standard', Unlimited: 'badge-unlimited' };
   allTiers.forEach(tier => {
-    const visits = tier.weekly_visits >= 99 ? 'Unlimited visits' : `${tier.weekly_visits}x visits per week`;
-    const price = tier.price_monthly ? `£${tier.price_monthly}` : 'TBC';
+    const visits = tier.weekly_visits >= 99 ? 'Unlimited visits' : tier.weekly_visits + 'x visits per week';
+    const price = tier.price_monthly ? '\u00a3' + tier.price_monthly : 'TBC';
     const badge = badgeClass[tier.name] || 'badge-basic';
-    container.innerHTML += `
-      <div class="tier-card" id="tier-${tier.id}" onclick="selectTier('${tier.id}')">
-        <span class="tier-badge ${badge}">${tier.name}</span>
-        <div class="tier-card-header">
-          <p class="tier-name">${tier.name}</p>
-          <p class="tier-price">${price}<span>/mo</span></p>
-        </div>
-        <p class="tier-visits">${visits}</p>
-        <div class="tier-check">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-      </div>`;
+    const card = document.createElement('div');
+    card.className = 'tier-card';
+    card.dataset.tierId = tier.id;
+    card.innerHTML =
+      '<span class="tier-badge ' + badge + '">' + tier.name + '</span>' +
+      '<div class="tier-card-header">' +
+        '<p class="tier-name">' + tier.name + '</p>' +
+        '<p class="tier-price">' + price + '<span>/mo</span></p>' +
+      '</div>' +
+      '<p class="tier-visits">' + visits + '</p>' +
+      '<div class="tier-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>';
+    card.addEventListener('click', (function(id) {
+      return function() { selectTier(id); };
+    })(tier.id));
+    container.appendChild(card);
   });
 }
 
@@ -1052,28 +1055,35 @@ function renderPodCards() {
   const container = document.getElementById('pod-cards');
   container.innerHTML = '';
   allPods.forEach(pod => {
-    container.innerHTML += `
-      <div class="pod-card" id="pod-${pod.id}" onclick="selectPod('${pod.id}')">
-        <div>
-          <p class="pod-name">${pod.name}</p>
-          <p class="pod-location">${pod.location || 'Location TBC'}</p>
-        </div>
-        <div class="pod-dot"></div>
-      </div>`;
+    const card = document.createElement('div');
+    card.className = 'pod-card';
+    card.dataset.podId = pod.id;
+    card.innerHTML =
+      '<div><p class="pod-name">' + pod.name + '</p>' +
+      '<p class="pod-location">' + (pod.location || 'Location TBC') + '</p></div>' +
+      '<div class="pod-dot"></div>';
+    card.addEventListener('click', (function(id) {
+      return function() { selectPod(id); };
+    })(pod.id));
+    container.appendChild(card);
   });
 }
 
 function selectTier(id) {
   selectedTierId = id;
   document.querySelectorAll('.tier-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('tier-' + id)?.classList.add('selected');
+  document.querySelectorAll('.tier-card').forEach(c => {
+    if (c.dataset.tierId === id) c.classList.add('selected');
+  });
   hideError('tier');
 }
 
 function selectPod(id) {
   selectedPodId = id;
   document.querySelectorAll('.pod-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('pod-' + id)?.classList.add('selected');
+  document.querySelectorAll('.pod-card').forEach(c => {
+    if (c.dataset.podId === id) c.classList.add('selected');
+  });
   hideError('pod');
 }
 
