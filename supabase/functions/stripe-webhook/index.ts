@@ -30,15 +30,24 @@ Deno.serve(async (req) => {
     const session = event.data.object as Stripe.Checkout.Session
     const { userId, membershipId, podId } = session.metadata!
 
-    await supabase
+    // Update the most recent inactive membership for this user
+    const { data: rows } = await supabase
       .from('member_memberships')
-      .update({
-        stripe_subscription_id: session.subscription as string,
-        active: true,
-      })
+      .select('id')
       .eq('profile_id', userId)
-      .eq('membership_id', membershipId)
-      .eq('pod_id', podId)
+      .eq('active', false)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (rows && rows.length > 0) {
+      await supabase
+        .from('member_memberships')
+        .update({
+          stripe_subscription_id: session.subscription as string,
+          active: true,
+        })
+        .eq('id', rows[0].id)
+    }
   }
 
   if (event.type === 'customer.subscription.updated') {
