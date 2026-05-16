@@ -222,7 +222,6 @@ input::placeholder { color:var(--muted); }
   <div id="error-payment" class="error-msg" style="margin-bottom:16px"></div>
   <div id="success-payment" class="success-msg" style="margin-bottom:16px"></div>
   <button class="btn btn-primary" id="btn-pay" onclick="startCheckout()">Pay with Stripe →</button>
-  <button class="btn btn-primary" id="btn-refresh-membership" style="display:none" onclick="window.location.href=window.location.pathname">Enter Dashboard →</button>
   <div style="height:12px"></div>
   <button class="btn btn-outline" onclick="showScreen('onboarding')">← Back</button>
   <p style="margin-top:24px;font-size:12px;color:var(--muted)">Secured by Stripe. Cancel anytime.</p>
@@ -699,7 +698,7 @@ async function generateAccessCode() {
   document.getElementById('code-display').classList.add('show');
   hideError('access');
   if (codeTimer) clearInterval(codeTimer);
-  let seconds = 600;
+  let seconds = 3600;
   updateCountdown(seconds);
   const genBtn = document.getElementById('btn-generate');
   genBtn.disabled = true;

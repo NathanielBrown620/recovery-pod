@@ -18,21 +18,7 @@ Deno.serve(async (req) => {
   try {
     const { priceId, userId, membershipId, podId } = await req.json()
 
-    // Create or retrieve a Stripe customer with userId in metadata
-    const customers = await stripe.customers.list({ limit: 1, metadata: { userId } })
-    let customerId: string
-
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id
-    } else {
-      const customer = await stripe.customers.create({
-        metadata: { userId }
-      })
-      customerId = customer.id
-    }
-
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
       payment_method_types: ['card'],
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
