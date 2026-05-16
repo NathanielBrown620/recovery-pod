@@ -518,10 +518,21 @@ async function generateAccessCode() {
   if (codeTimer) clearInterval(codeTimer);
   let seconds = 600;
   updateCountdown(seconds);
+  // Disable generate button during countdown
+  const genBtn = document.getElementById('btn-generate');
+  genBtn.disabled = true;
+  genBtn.textContent = 'Code active — wait for expiry';
   codeTimer = setInterval(() => {
     seconds--;
     updateCountdown(seconds);
-    if (seconds <= 0) { clearInterval(codeTimer); document.getElementById('code-value').textContent = 'Expired'; }
+    if (seconds <= 0) {
+      clearInterval(codeTimer);
+      document.getElementById('code-value').textContent = 'Expired';
+      document.getElementById('code-countdown').textContent = 'Expired';
+      genBtn.disabled = false;
+      genBtn.textContent = 'Generate Access Code';
+      document.getElementById('code-display').classList.remove('show');
+    }
   }, 1000);
   await populateDashboard();
   await populateAccessScreen();
