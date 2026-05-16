@@ -222,7 +222,7 @@ input::placeholder { color:var(--muted); }
   <div id="error-payment" class="error-msg" style="margin-bottom:16px"></div>
   <div id="success-payment" class="success-msg" style="margin-bottom:16px"></div>
   <button class="btn btn-primary" id="btn-pay" onclick="startCheckout()">Pay with Stripe →</button>
-  <button class="btn btn-primary" id="btn-refresh-membership" style="display:none" onclick="loadUserData()">Enter Dashboard →</button>
+  <button class="btn btn-primary" id="btn-refresh-membership" style="display:none" onclick="window.location.href=window.location.pathname">Enter Dashboard →</button>
   <div style="height:12px"></div>
   <button class="btn btn-outline" onclick="showScreen('onboarding')">← Back</button>
   <p style="margin-top:24px;font-size:12px;color:var(--muted)">Secured by Stripe. Cancel anytime.</p>
@@ -400,8 +400,8 @@ async function handlePaymentSuccess() {
       .maybeSingle();
 
     if (mm) {
-      // Membership is active — load and go to dashboard
-      await loadUserData();
+      // Membership is active — full reload to clear state
+      window.location.href = window.location.pathname;
     } else {
       attempts++;
       if (attempts < maxAttempts) {
@@ -413,6 +413,8 @@ async function handlePaymentSuccess() {
         document.getElementById('success-payment').classList.add('show');
         document.getElementById('btn-pay').style.display = 'none';
         document.getElementById('btn-refresh-membership').style.display = 'block';
+        // Also auto-reload after 2 more seconds
+        setTimeout(() => { window.location.href = window.location.pathname; }, 2000);
       }
     }
   };

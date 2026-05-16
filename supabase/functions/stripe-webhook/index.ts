@@ -1,8 +1,9 @@
-import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno'
+import Stripe from 'https://esm.sh/stripe@13.11.0?target=deno&no-check'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
-  apiVersion: '2024-06-20',
+  apiVersion: '2023-10-16',
+  httpClient: Stripe.createFetchHttpClient(),
 })
 
 const supabase = createClient(
@@ -17,10 +18,13 @@ Deno.serve(async (req) => {
   let event: Stripe.Event
 
   try {
+    const cryptoProvider = Stripe.createSubtleCryptoProvider()
     event = await stripe.webhooks.constructEventAsync(
       body,
       signature!,
-      Deno.env.get('STRIPE_WEBHOOK_SECRET') as string
+      Deno.env.get('STRIPE_WEBHOOK_SECRET') as string,
+      undefined,
+      cryptoProvider
     )
   } catch (err) {
     return new Response(`Webhook Error: ${err.message}`, { status: 400 })
@@ -28,9 +32,9 @@ Deno.serve(async (req) => {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
-    const { userId, membershipId, podId } = session.metadata!
+    const { userId } = session.metadata!
 
-    // Update the most recent inactive membership for this user
+    // Find the most recent inactive membership for this user and activate it
     const { data: rows } = await supabase
       .from('member_memberships')
       .select('id')
