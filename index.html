@@ -769,8 +769,8 @@ async function handleSignup() {
 
   currentUser = data.user;
   currentProfile = { id: userId, full_name: name, email, phone };
-  await loadTiersAndPods();
   showScreen('onboarding');
+  await loadTiersAndPods();
 }
 
 async function handleSignOut() {
@@ -801,8 +801,8 @@ async function loadUserData() {
 
   if (!membership) {
     // No membership yet — go to onboarding
-    await loadTiersAndPods();
     showScreen('onboarding');
+    await loadTiersAndPods();
     return;
   }
 
