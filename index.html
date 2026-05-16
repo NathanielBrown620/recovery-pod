@@ -222,6 +222,7 @@ input::placeholder { color:var(--muted); }
   <div id="error-payment" class="error-msg" style="margin-bottom:16px"></div>
   <div id="success-payment" class="success-msg" style="margin-bottom:16px"></div>
   <button class="btn btn-primary" id="btn-pay" onclick="startCheckout()">Pay with Stripe →</button>
+  <button class="btn btn-primary" id="btn-refresh-membership" style="display:none" onclick="loadUserData()">Enter Dashboard →</button>
   <div style="height:12px"></div>
   <button class="btn btn-outline" onclick="showScreen('onboarding')">← Back</button>
   <p style="margin-top:24px;font-size:12px;color:var(--muted)">Secured by Stripe. Cancel anytime.</p>
@@ -389,7 +390,7 @@ let codeTimer = null;
 async function handlePaymentSuccess() {
   // Poll Supabase for up to 10 seconds waiting for webhook to activate membership
   let attempts = 0;
-  const maxAttempts = 10;
+  const maxAttempts = 30;
 
   const poll = async () => {
     const { data: mm } = await sb.from('member_memberships')
@@ -406,11 +407,12 @@ async function handlePaymentSuccess() {
       if (attempts < maxAttempts) {
         setTimeout(poll, 1000);
       } else {
-        // Webhook may be slow — show success anyway and ask them to refresh
+        // Webhook may be slow — show refresh button
         showScreen('payment');
-        document.getElementById('success-payment').textContent = '✓ Payment received! Your membership is activating. Please refresh in a moment.';
+        document.getElementById('success-payment').textContent = '✓ Payment received! Click below to enter your dashboard.';
         document.getElementById('success-payment').classList.add('show');
         document.getElementById('btn-pay').style.display = 'none';
+        document.getElementById('btn-refresh-membership').style.display = 'block';
       }
     }
   };
