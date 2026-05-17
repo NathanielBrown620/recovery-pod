@@ -93,13 +93,18 @@ input::placeholder { color:var(--muted); }
 .dash-header { padding:56px 28px 28px; border-bottom:1px solid var(--border); }
 .dash-greeting { font-size:13px; color:var(--muted); margin-bottom:4px; }
 .dash-name { font-size:24px; font-weight:800; }
+
+/* VISITS CARD — two week split */
 .visits-card { margin:24px 28px; background:var(--surface); border-radius:20px; padding:24px; border:1px solid var(--border); }
-.visits-label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; }
-.visits-count { font-family:'Syne',sans-serif; font-size:52px; font-weight:800; line-height:1; color:var(--accent); }
-.visits-total { font-size:18px; color:var(--muted); }
-.visits-sub { font-size:13px; color:var(--muted); margin-top:8px; }
-.progress-bar { width:100%; height:4px; background:var(--border); border-radius:2px; margin-top:16px; overflow:hidden; }
-.progress-fill { height:100%; background:var(--accent); border-radius:2px; transition:width 0.5s ease; }
+.visits-label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:16px; }
+.visits-weeks { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.visits-week-tile { background:var(--surface2); border-radius:12px; padding:14px; border:1px solid var(--border); }
+.visits-week-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
+.visits-week-count { font-family:'Syne',sans-serif; font-size:32px; font-weight:800; line-height:1; color:var(--accent); }
+.visits-week-count.none { color:var(--danger); }
+.visits-week-total { font-size:13px; color:var(--muted); margin-top:4px; }
+.visits-sub { font-size:12px; color:var(--muted); }
+
 .dash-section { padding:0 28px; margin-bottom:24px; }
 .dash-section-title { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:14px; }
 .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
@@ -124,8 +129,13 @@ input::placeholder { color:var(--muted); }
 .visits-warning { background:rgba(255,77,77,0.08); border:1px solid rgba(255,77,77,0.2); border-radius:12px; padding:14px 16px; font-size:14px; color:var(--danger); margin-bottom:20px; display:none; }
 .visits-warning.show { display:block; }
 
+/* WEEK VISITS PILL on booking screen */
+.week-visits-pill { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:var(--muted); transition:all 0.2s; }
+.week-visits-pill strong { color:var(--text); }
+.week-visits-pill.none strong { color:var(--danger); }
+
 /* DATE PICKER */
-.date-scroll { display:flex; gap:10px; overflow-x:auto; padding-bottom:8px; margin-bottom:20px; scrollbar-width:none; }
+.date-scroll { display:flex; gap:10px; overflow-x:auto; padding-bottom:8px; margin-bottom:12px; scrollbar-width:none; }
 .date-scroll::-webkit-scrollbar { display:none; }
 .date-pill { flex-shrink:0; display:flex; flex-direction:column; align-items:center; padding:10px 14px; border-radius:12px; border:1px solid var(--border); background:var(--surface); cursor:pointer; transition:all 0.15s; min-width:52px; }
 .date-pill.active { border-color:var(--accent); background:var(--accent); }
@@ -268,23 +278,35 @@ input::placeholder { color:var(--muted); }
     <p class="dash-greeting">Welcome back</p>
     <h2 class="dash-name" id="dash-name">—</h2>
   </div>
-  <div class="visits-card">
-    <p class="visits-label">Visits remaining this week</p>
-    <div style="display:flex;align-items:baseline;gap:8px">
-      <span class="visits-count" id="visits-remaining">—</span>
-      <span class="visits-total" id="visits-total"></span>
+
+  <!-- Two-week visits card -->
+  <div class="visits-card" style="margin-top:24px">
+    <p class="visits-label">Visits remaining</p>
+    <div class="visits-weeks">
+      <div class="visits-week-tile">
+        <p class="visits-week-label">This week</p>
+        <p class="visits-week-count" id="visits-this-week">—</p>
+        <p class="visits-week-total" id="visits-this-week-total"></p>
+      </div>
+      <div class="visits-week-tile">
+        <p class="visits-week-label">Next week</p>
+        <p class="visits-week-count" id="visits-next-week">—</p>
+        <p class="visits-week-total" id="visits-next-week-total"></p>
+      </div>
     </div>
     <p class="visits-sub">Resets every Monday</p>
-    <div class="progress-bar"><div class="progress-fill" id="visits-progress" style="width:0%"></div></div>
   </div>
+
   <div class="next-booking-card" id="next-booking-card">
     <p class="next-booking-label">Next booking</p>
     <p class="next-booking-time" id="next-booking-time">—</p>
     <p class="next-booking-pod" id="next-booking-pod">—</p>
   </div>
+
   <div class="access-btn-wrap">
     <button class="btn btn-primary" onclick="showScreen('access')">Book a Session →</button>
   </div>
+
   <div class="dash-section">
     <p class="dash-section-title">Your membership</p>
     <div class="info-grid">
@@ -338,12 +360,16 @@ input::placeholder { color:var(--muted); }
     <p class="code-timer">Expires in <span id="code-countdown">60:00</span></p>
   </div>
 
-  <!-- Date picker -->
+  <!-- Date picker + slots -->
   <div id="booking-section" style="margin-top:28px">
     <p class="section-title">Select a date</p>
     <div class="date-scroll" id="date-scroll"></div>
-    <p class="section-title" style="margin-top:4px">Available slots</p>
-    <div id="slots-loading" style="color:var(--muted);font-size:14px;padding:8px 0 16px">Loading slots...</div>
+
+    <!-- Dynamic visits pill for selected week -->
+    <div class="week-visits-pill" id="week-visits-pill">Loading...</div>
+
+    <p class="section-title">Available slots</p>
+    <div id="slots-loading" style="color:var(--muted);font-size:14px;padding:8px 0 16px;display:none">Loading slots...</div>
     <div class="slots-grid" id="slots-grid"></div>
 
     <!-- Confirm booking -->
@@ -572,16 +598,23 @@ async function loadUserData() {
   showScreen('dashboard');
 }
 
-// ── WEEKLY VISIT COUNT (access logs + confirmed bookings) ──
+// ── WEEKLY VISIT COUNT ──
+// Counts access_logs + confirmed bookings strictly within the given week window
 async function getWeeklyUsed(weekStart) {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 7);
 
   const [{ data: logs }, { data: bookings }] = await Promise.all([
-    sb.from('access_logs').select('id').eq('profile_id', currentUser.id).eq('granted', true)
-      .gte('accessed_at', weekStart.toISOString()).lt('accessed_at', weekEnd.toISOString()),
-    sb.from('bookings').select('id').eq('profile_id', currentUser.id).eq('status', 'confirmed')
-      .gte('slot_start', weekStart.toISOString()).lt('slot_start', weekEnd.toISOString())
+    sb.from('access_logs').select('id')
+      .eq('profile_id', currentUser.id)
+      .eq('granted', true)
+      .gte('accessed_at', weekStart.toISOString())
+      .lt('accessed_at', weekEnd.toISOString()),
+    sb.from('bookings').select('id')
+      .eq('profile_id', currentUser.id)
+      .eq('status', 'confirmed')
+      .gte('slot_start', weekStart.toISOString())
+      .lt('slot_start', weekEnd.toISOString())
   ]);
 
   return (logs?.length || 0) + (bookings?.length || 0);
@@ -695,19 +728,32 @@ async function populateDashboard() {
   const since = currentMembership?.start_date ? new Date(currentMembership.start_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '—';
   document.getElementById('dash-since').textContent = since;
 
-  const weekStart = getWeekStart();
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 7);
   const total = currentTier?.weekly_visits || 0;
   const isUnlimited = total >= 99;
 
-  const used = isUnlimited ? 0 : await getWeeklyUsed(weekStart);
-  const remaining = isUnlimited ? 99 : Math.max(0, total - used);
+  // This week
+  const thisWeekStart = getWeekStart();
+  // Next week
+  const nextWeekStart = new Date(thisWeekStart);
+  nextWeekStart.setDate(thisWeekStart.getDate() + 7);
 
-  document.getElementById('visits-remaining').textContent = isUnlimited ? '∞' : remaining;
-  document.getElementById('visits-total').textContent = isUnlimited ? '' : '/ ' + total;
-  const pct = (!isUnlimited && total > 0) ? ((total - remaining) / total) * 100 : 0;
-  document.getElementById('visits-progress').style.width = pct + '%';
+  const [usedThis, usedNext] = isUnlimited
+    ? [0, 0]
+    : await Promise.all([getWeeklyUsed(thisWeekStart), getWeeklyUsed(nextWeekStart)]);
+
+  const remainThis = isUnlimited ? '∞' : Math.max(0, total - usedThis);
+  const remainNext = isUnlimited ? '∞' : Math.max(0, total - usedNext);
+
+  const thisEl = document.getElementById('visits-this-week');
+  const nextEl = document.getElementById('visits-next-week');
+
+  thisEl.textContent = remainThis;
+  nextEl.textContent = remainNext;
+  thisEl.className = 'visits-week-count' + (remainThis === 0 ? ' none' : '');
+  nextEl.className = 'visits-week-count' + (remainNext === 0 ? ' none' : '');
+
+  document.getElementById('visits-this-week-total').textContent = isUnlimited ? 'Unlimited' : 'of ' + total + ' visits';
+  document.getElementById('visits-next-week-total').textContent = isUnlimited ? 'Unlimited' : 'of ' + total + ' visits';
 
   // Next upcoming booking
   const now = new Date();
@@ -745,14 +791,6 @@ function populateProfile() {
 async function populateAccessScreen() {
   document.getElementById('access-pod-name').textContent = currentPod?.name || '—';
   hideError('access');
-
-  // Visits warning for this week
-  const weekStart = getWeekStart();
-  const total = currentTier?.weekly_visits || 0;
-  const isUnlimited = total >= 99;
-  const used = isUnlimited ? 0 : await getWeeklyUsed(weekStart);
-  const remaining = isUnlimited ? 99 : Math.max(0, total - used);
-  document.getElementById('visits-warning').classList.toggle('show', !isUnlimited && remaining <= 0);
 
   // Check for currently active booking
   const now = new Date();
@@ -806,9 +844,35 @@ function buildDatePicker() {
   loadSlotsForDate(selectedDate);
 }
 
+async function updateWeekVisitsPill(date) {
+  const wkStart = getWeekStartFor(date);
+  const total = currentTier?.weekly_visits || 0;
+  const isUnlimited = total >= 99;
+  const pill = document.getElementById('week-visits-pill');
+
+  if (isUnlimited) {
+    pill.innerHTML = 'Unlimited visits this week';
+    pill.classList.remove('none');
+    return;
+  }
+
+  const used = await getWeeklyUsed(wkStart);
+  const remaining = Math.max(0, total - used);
+  const wkEnd = new Date(wkStart);
+  wkEnd.setDate(wkStart.getDate() + 6);
+  const wkLabel = wkStart.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) +
+    ' – ' + wkEnd.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+  pill.innerHTML = '<strong>' + remaining + ' of ' + total + ' visits remaining</strong> · ' + wkLabel;
+  pill.classList.toggle('none', remaining === 0);
+}
+
 async function loadSlotsForDate(date) {
   document.getElementById('slots-loading').style.display = 'block';
   document.getElementById('slots-grid').innerHTML = '';
+
+  // Update the visits pill for the week this date falls in
+  await updateWeekVisitsPill(date);
 
   const dayStart = new Date(date);
   dayStart.setHours(0, 0, 0, 0);
@@ -953,6 +1017,8 @@ async function cancelBooking(bookingId) {
   await loadUpcomingBookings();
   await loadSlotsForDate(selectedDate);
   await populateDashboard();
+  // Refresh the visits pill for the currently selected date
+  if (selectedDate) await updateWeekVisitsPill(selectedDate);
 }
 
 async function cancelActiveBooking() {
