@@ -93,8 +93,6 @@ input::placeholder { color:var(--muted); }
 .dash-header { padding:56px 28px 28px; border-bottom:1px solid var(--border); }
 .dash-greeting { font-size:13px; color:var(--muted); margin-bottom:4px; }
 .dash-name { font-size:24px; font-weight:800; }
-
-/* VISITS CARD — two week split */
 .visits-card { margin:24px 28px; background:var(--surface); border-radius:20px; padding:24px; border:1px solid var(--border); }
 .visits-label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:16px; }
 .visits-weeks { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
@@ -104,7 +102,6 @@ input::placeholder { color:var(--muted); }
 .visits-week-count.none { color:var(--danger); }
 .visits-week-total { font-size:13px; color:var(--muted); margin-top:4px; }
 .visits-sub { font-size:12px; color:var(--muted); }
-
 .dash-section { padding:0 28px; margin-bottom:24px; }
 .dash-section-title { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:14px; }
 .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
@@ -129,7 +126,7 @@ input::placeholder { color:var(--muted); }
 .visits-warning { background:rgba(255,77,77,0.08); border:1px solid rgba(255,77,77,0.2); border-radius:12px; padding:14px 16px; font-size:14px; color:var(--danger); margin-bottom:20px; display:none; }
 .visits-warning.show { display:block; }
 
-/* WEEK VISITS PILL on booking screen */
+/* WEEK VISITS PILL */
 .week-visits-pill { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:var(--muted); transition:all 0.2s; }
 .week-visits-pill strong { color:var(--text); }
 .week-visits-pill.none strong { color:var(--danger); }
@@ -278,8 +275,6 @@ input::placeholder { color:var(--muted); }
     <p class="dash-greeting">Welcome back</p>
     <h2 class="dash-name" id="dash-name">—</h2>
   </div>
-
-  <!-- Two-week visits card -->
   <div class="visits-card" style="margin-top:24px">
     <p class="visits-label">Visits remaining</p>
     <div class="visits-weeks">
@@ -296,17 +291,14 @@ input::placeholder { color:var(--muted); }
     </div>
     <p class="visits-sub">Resets every Monday</p>
   </div>
-
   <div class="next-booking-card" id="next-booking-card">
     <p class="next-booking-label">Next booking</p>
     <p class="next-booking-time" id="next-booking-time">—</p>
     <p class="next-booking-pod" id="next-booking-pod">—</p>
   </div>
-
   <div class="access-btn-wrap">
     <button class="btn btn-primary" onclick="showScreen('access')">Book a Session →</button>
   </div>
-
   <div class="dash-section">
     <p class="dash-section-title">Your membership</p>
     <div class="info-grid">
@@ -364,15 +356,10 @@ input::placeholder { color:var(--muted); }
   <div id="booking-section" style="margin-top:28px">
     <p class="section-title">Select a date</p>
     <div class="date-scroll" id="date-scroll"></div>
-
-    <!-- Dynamic visits pill for selected week -->
     <div class="week-visits-pill" id="week-visits-pill">Loading...</div>
-
     <p class="section-title">Available slots</p>
     <div id="slots-loading" style="color:var(--muted);font-size:14px;padding:8px 0 16px;display:none">Loading slots...</div>
     <div class="slots-grid" id="slots-grid"></div>
-
-    <!-- Confirm booking -->
     <div id="confirm-booking-box" class="confirm-box">
       <p class="confirm-box-title">Confirm booking</p>
       <p class="confirm-box-sub" id="confirm-booking-msg"></p>
@@ -599,24 +586,17 @@ async function loadUserData() {
 }
 
 // ── WEEKLY VISIT COUNT ──
-// Counts access_logs + confirmed bookings strictly within the given week window
 async function getWeeklyUsed(weekStart) {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 7);
-
   const [{ data: logs }, { data: bookings }] = await Promise.all([
     sb.from('access_logs').select('id')
-      .eq('profile_id', currentUser.id)
-      .eq('granted', true)
-      .gte('accessed_at', weekStart.toISOString())
-      .lt('accessed_at', weekEnd.toISOString()),
+      .eq('profile_id', currentUser.id).eq('granted', true)
+      .gte('accessed_at', weekStart.toISOString()).lt('accessed_at', weekEnd.toISOString()),
     sb.from('bookings').select('id')
-      .eq('profile_id', currentUser.id)
-      .eq('status', 'confirmed')
-      .gte('slot_start', weekStart.toISOString())
-      .lt('slot_start', weekEnd.toISOString())
+      .eq('profile_id', currentUser.id).eq('status', 'confirmed')
+      .gte('slot_start', weekStart.toISOString()).lt('slot_start', weekEnd.toISOString())
   ]);
-
   return (logs?.length || 0) + (bookings?.length || 0);
 }
 
@@ -725,15 +705,13 @@ async function populateDashboard() {
   document.getElementById('dash-name').textContent = (currentProfile?.full_name || 'Member').split(' ')[0];
   document.getElementById('dash-tier').textContent = currentTier?.name || '—';
   document.getElementById('dash-pod').textContent = currentPod?.name || '—';
-  const since = currentMembership?.start_date ? new Date(currentMembership.start_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '—';
+  const since = currentMembership?.start_date
+    ? new Date(currentMembership.start_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '—';
   document.getElementById('dash-since').textContent = since;
 
   const total = currentTier?.weekly_visits || 0;
   const isUnlimited = total >= 99;
-
-  // This week
   const thisWeekStart = getWeekStart();
-  // Next week
   const nextWeekStart = new Date(thisWeekStart);
   nextWeekStart.setDate(thisWeekStart.getDate() + 7);
 
@@ -746,12 +724,10 @@ async function populateDashboard() {
 
   const thisEl = document.getElementById('visits-this-week');
   const nextEl = document.getElementById('visits-next-week');
-
   thisEl.textContent = remainThis;
   nextEl.textContent = remainNext;
   thisEl.className = 'visits-week-count' + (remainThis === 0 ? ' none' : '');
   nextEl.className = 'visits-week-count' + (remainNext === 0 ? ' none' : '');
-
   document.getElementById('visits-this-week-total').textContent = isUnlimited ? 'Unlimited' : 'of ' + total + ' visits';
   document.getElementById('visits-next-week-total').textContent = isUnlimited ? 'Unlimited' : 'of ' + total + ' visits';
 
@@ -779,12 +755,14 @@ function populateProfile() {
   document.getElementById('profile-name').textContent = name;
   document.getElementById('profile-email-display').textContent = currentProfile?.email || '—';
   document.getElementById('profile-tier').textContent = currentTier?.name || '—';
-  document.getElementById('profile-visits-detail').textContent = currentTier ? ((currentTier.weekly_visits >= 99 ? 'Unlimited' : currentTier.weekly_visits + 'x') + ' visits per week') : '—';
+  document.getElementById('profile-visits-detail').textContent = currentTier
+    ? ((currentTier.weekly_visits >= 99 ? 'Unlimited' : currentTier.weekly_visits + 'x') + ' visits per week') : '—';
   document.getElementById('profile-pod').textContent = currentPod ? 'Pod: ' + currentPod.name : '—';
   document.getElementById('p-fullname').textContent = name;
   document.getElementById('p-email').textContent = currentProfile?.email || '—';
   document.getElementById('p-phone').textContent = currentProfile?.phone || 'Not set';
-  document.getElementById('p-since').textContent = currentMembership?.start_date ? new Date(currentMembership.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+  document.getElementById('p-since').textContent = currentMembership?.start_date
+    ? new Date(currentMembership.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
 }
 
 // ── BOOKING SCREEN ──
@@ -823,7 +801,17 @@ function buildDatePicker() {
   today.setHours(0, 0, 0, 0);
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  for (let i = 0; i < 14; i++) {
+  // Window = today through end of next week (Sun)
+  const nextWeekStart = new Date(getWeekStart());
+  nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+  const windowEnd = new Date(nextWeekStart);
+  windowEnd.setDate(nextWeekStart.getDate() + 6); // Sunday of next week
+  windowEnd.setHours(23, 59, 59, 999);
+
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const daysToShow = Math.round((windowEnd - today) / msPerDay);
+
+  for (let i = 0; i <= daysToShow; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     const pill = document.createElement('div');
@@ -871,7 +859,6 @@ async function loadSlotsForDate(date) {
   document.getElementById('slots-loading').style.display = 'block';
   document.getElementById('slots-grid').innerHTML = '';
 
-  // Update the visits pill for the week this date falls in
   await updateWeekVisitsPill(date);
 
   const dayStart = new Date(date);
@@ -893,7 +880,6 @@ async function loadSlotsForDate(date) {
   SLOT_HOURS.forEach(hour => {
     const slotStart = new Date(date);
     slotStart.setHours(hour, 0, 0, 0);
-
     const isPast = slotStart < now;
     const myBooking = allBookingsForDate.find(b => b.profile_id === currentUser.id && new Date(b.slot_start).getHours() === hour);
     const takenByOther = !myBooking && allBookingsForDate.some(b => new Date(b.slot_start).getHours() === hour);
@@ -903,13 +889,10 @@ async function loadSlotsForDate(date) {
     el.innerHTML = '<p class="slot-time">' + formatTime(slotStart) + '</p><p class="slot-status">' +
       (isPast ? 'Past' : myBooking ? '✓ Yours' : takenByOther ? 'Taken' : 'Free') + '</p>';
 
-    if (isPast) {
-      el.classList.add('slot-past');
-    } else if (myBooking) {
-      el.classList.add('slot-mine');
-    } else if (takenByOther) {
-      el.classList.add('slot-taken');
-    } else {
+    if (isPast) { el.classList.add('slot-past'); }
+    else if (myBooking) { el.classList.add('slot-mine'); }
+    else if (takenByOther) { el.classList.add('slot-taken'); }
+    else {
       el.addEventListener('click', () => {
         document.querySelectorAll('.slot').forEach(s => s.classList.remove('slot-selected'));
         el.classList.add('slot-selected');
@@ -947,7 +930,6 @@ function cancelBookingConfirm() {
 async function confirmBooking() {
   if (!pendingBookingSlot) return;
   const { date, hour } = pendingBookingSlot;
-
   const wkStart = getWeekStartFor(date);
   const total = currentTier?.weekly_visits || 0;
   const isUnlimited = total >= 99;
@@ -967,11 +949,8 @@ async function confirmBooking() {
   slotEnd.setHours(hour + 1, 0, 0, 0);
 
   const { error } = await sb.from('bookings').insert({
-    profile_id: currentUser.id,
-    pod_id: currentPod.id,
-    slot_start: slotStart.toISOString(),
-    slot_end: slotEnd.toISOString(),
-    status: 'confirmed'
+    profile_id: currentUser.id, pod_id: currentPod.id,
+    slot_start: slotStart.toISOString(), slot_end: slotEnd.toISOString(), status: 'confirmed'
   });
 
   if (error) { cancelBookingConfirm(); showError('access', 'Could not save booking. Please try again.'); return; }
@@ -1017,7 +996,6 @@ async function cancelBooking(bookingId) {
   await loadUpcomingBookings();
   await loadSlotsForDate(selectedDate);
   await populateDashboard();
-  // Refresh the visits pill for the currently selected date
   if (selectedDate) await updateWeekVisitsPill(selectedDate);
 }
 
@@ -1064,7 +1042,10 @@ async function generateAccessCode() {
   const granted = isUnlimited || used < total;
 
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  await sb.from('access_logs').insert({ profile_id: currentUser.id, pod_id: podId, granted, visit_count_this_week: used + (granted ? 1 : 0) });
+  await sb.from('access_logs').insert({
+    profile_id: currentUser.id, pod_id: podId, granted,
+    visit_count_this_week: used + (granted ? 1 : 0)
+  });
 
   if (!granted) { document.getElementById('visits-warning').classList.add('show'); return; }
 
