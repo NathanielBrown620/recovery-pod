@@ -125,8 +125,6 @@ input::placeholder { color:var(--muted); }
 .active-booking-time { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; color:var(--success); margin-bottom:12px; }
 .visits-warning { background:rgba(255,77,77,0.08); border:1px solid rgba(255,77,77,0.2); border-radius:12px; padding:14px 16px; font-size:14px; color:var(--danger); margin-bottom:20px; display:none; }
 .visits-warning.show { display:block; }
-
-/* WEEK VISITS PILL */
 .week-visits-pill { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:var(--muted); transition:all 0.2s; }
 .week-visits-pill strong { color:var(--text); }
 .week-visits-pill.none strong { color:var(--danger); }
@@ -326,7 +324,6 @@ input::placeholder { color:var(--muted); }
   <div id="visits-warning" class="visits-warning">You have no visits remaining this week. Resets every Monday.</div>
   <div id="error-access" class="error-msg" style="margin-bottom:16px"></div>
 
-  <!-- Active session banner -->
   <div id="active-booking-banner" class="active-booking-banner">
     <p class="active-booking-label">✓ Active session now</p>
     <p class="active-booking-time" id="active-booking-time-text">—</p>
@@ -334,7 +331,6 @@ input::placeholder { color:var(--muted); }
     <button class="btn btn-danger" onclick="cancelActiveBooking()" style="padding:12px;font-size:13px">Cancel this booking</button>
   </div>
 
-  <!-- Confirm code -->
   <div id="confirm-box" class="confirm-box">
     <p class="confirm-box-title">Use a visit?</p>
     <p class="confirm-box-sub" id="confirm-box-msg"></p>
@@ -344,7 +340,6 @@ input::placeholder { color:var(--muted); }
     </div>
   </div>
 
-  <!-- Code display -->
   <div id="code-display" class="code-display">
     <p class="code-label">Your entry code</p>
     <p class="code-number" id="code-value">——</p>
@@ -352,7 +347,6 @@ input::placeholder { color:var(--muted); }
     <p class="code-timer">Expires in <span id="code-countdown">60:00</span></p>
   </div>
 
-  <!-- Date picker + slots -->
   <div id="booking-section" style="margin-top:28px">
     <p class="section-title">Select a date</p>
     <div class="date-scroll" id="date-scroll"></div>
@@ -370,7 +364,6 @@ input::placeholder { color:var(--muted); }
     </div>
   </div>
 
-  <!-- Upcoming bookings -->
   <div style="margin-top:32px">
     <p class="section-title">Your upcoming bookings</p>
     <div id="upcoming-bookings"></div>
@@ -600,6 +593,18 @@ async function getWeeklyUsed(weekStart) {
   return (logs?.length || 0) + (bookings?.length || 0);
 }
 
+// ── BOOKING WINDOW HELPERS ──
+// Returns the last bookable date: Sunday ending next week (Mon–Sun)
+function getBookingWindowEnd() {
+  const thisWeekStart = getWeekStart(); // Monday of current week
+  const nextWeekStart = new Date(thisWeekStart);
+  nextWeekStart.setDate(thisWeekStart.getDate() + 7); // Monday of next week
+  const windowEnd = new Date(nextWeekStart);
+  windowEnd.setDate(nextWeekStart.getDate() + 6); // Sunday of next week
+  windowEnd.setHours(23, 59, 59, 999);
+  return windowEnd;
+}
+
 // ── ONBOARDING + STRIPE ──
 async function loadTiersAndPods() {
   const { data: tiers } = await sb.from('memberships').select('*').order('weekly_visits');
@@ -731,7 +736,6 @@ async function populateDashboard() {
   document.getElementById('visits-this-week-total').textContent = isUnlimited ? 'Unlimited' : 'of ' + total + ' visits';
   document.getElementById('visits-next-week-total').textContent = isUnlimited ? 'Unlimited' : 'of ' + total + ' visits';
 
-  // Next upcoming booking
   const now = new Date();
   const { data: upcoming } = await sb.from('bookings')
     .select('*').eq('profile_id', currentUser.id).eq('status', 'confirmed')
@@ -770,7 +774,6 @@ async function populateAccessScreen() {
   document.getElementById('access-pod-name').textContent = currentPod?.name || '—';
   hideError('access');
 
-  // Check for currently active booking
   const now = new Date();
   const { data: active } = await sb.from('bookings')
     .select('*').eq('profile_id', currentUser.id).eq('status', 'confirmed')
@@ -801,13 +804,8 @@ function buildDatePicker() {
   today.setHours(0, 0, 0, 0);
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  // Window = today through end of next week (Sun)
-  const nextWeekStart = new Date(getWeekStart());
-  nextWeekStart.setDate(nextWeekStart.getDate() + 7);
-  const windowEnd = new Date(nextWeekStart);
-  windowEnd.setDate(nextWeekStart.getDate() + 6); // Sunday of next week
-  windowEnd.setHours(23, 59, 59, 999);
-
+  // Window always ends on the Sunday of next week (relative to Mon–Sun weeks)
+  const windowEnd = getBookingWindowEnd();
   const msPerDay = 24 * 60 * 60 * 1000;
   const daysToShow = Math.round((windowEnd - today) / msPerDay);
 
