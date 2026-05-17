@@ -356,20 +356,21 @@ let codeTimer = null;
 
 // ── INIT ──
 (async () => {
-  // Check for payment return
   const params = new URLSearchParams(window.location.search);
   const paymentStatus = params.get('payment');
+
+  // Clean URL immediately so a refresh doesn't re-trigger the flow
+  if (paymentStatus) {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
 
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
     currentUser = session.user;
-
     if (paymentStatus === 'success') {
-      // Payment done — poll for webhook to activate membership
       await handlePaymentSuccess();
     } else if (paymentStatus === 'cancelled') {
       await loadUserData();
-      // Show cancelled message on payment screen
       showScreen('payment');
       showError('payment', 'Payment was cancelled. Please try again.');
     } else {
@@ -378,24 +379,49 @@ let codeTimer = null;
   } else {
     showScreen('auth');
   }
-
-  // Clean URL
-  if (paymentStatus) {
-    window.history.replaceState({}, '', window.location.pathname);
-  }
 })();
 
 // ── PAYMENT SUCCESS HANDLER ──
+// Polls Supabase every 2s (up to 30s) until the webhook activates the membership,
+// then routes straight to the dashboard without a page reload.
 async function handlePaymentSuccess() {
   showScreen('payment');
-  document.getElementById('success-payment').textContent = '✓ Payment confirmed! Taking you to your dashboard...';
-  document.getElementById('success-payment').classList.add('show');
+  const successEl = document.getElementById('success-payment');
+  successEl.textContent = '✓ Payment confirmed! Activating your membership...';
+  successEl.classList.add('show');
   document.getElementById('btn-pay').style.display = 'none';
-  document.getElementById('btn-refresh-membership').style.display = 'block';
-  // Wait 6 seconds for webhook to fire, then reload clean
-  setTimeout(() => {
-    window.location.href = window.location.pathname;
-  }, 6000);
+
+  const uid = currentUser.id;
+  const maxAttempts = 15; // 15 × 2s = 30 seconds max wait
+
+  let attempts = 0;
+  const poll = setInterval(async () => {
+    attempts++;
+
+    const { data: mm } = await sb.from('member_memberships')
+      .select('*')
+      .eq('profile_id', uid)
+      .eq('active', true)
+      .maybeSingle();
+
+    if (mm) {
+      clearInterval(poll);
+      successEl.textContent = '✓ Membership active! Taking you to your dashboard...';
+      await loadUserData();
+      return;
+    }
+
+    if (attempts >= maxAttempts) {
+      clearInterval(poll);
+      successEl.textContent = '';
+      successEl.classList.remove('show');
+      document.getElementById('btn-pay').style.display = 'block';
+      document.getElementById('btn-pay').textContent = 'Try again';
+      showError('payment', 'Membership activation is taking longer than expected. Please sign out and back in, or contact support.');
+    } else {
+      successEl.textContent = '✓ Payment confirmed! Activating your membership... (' + attempts + '/' + maxAttempts + ')';
+    }
+  }, 2000);
 }
 
 // ── AUTH ──
@@ -547,7 +573,6 @@ async function proceedToPayment() {
 
   setLoading('btn-complete', true, 'Preparing payment...');
 
-  // Create a pending membership row (inactive until Stripe webhook fires)
   const { data: mm, error } = await sb.from('member_memberships').insert({
     profile_id: currentUser.id,
     membership_id: selectedTierId,
