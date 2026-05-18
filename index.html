@@ -324,7 +324,7 @@ input::placeholder { color:var(--muted); }
   <div id="visits-warning" class="visits-warning">You have no visits remaining this week. Resets every Monday.</div>
   <div id="error-access" class="error-msg" style="margin-bottom:16px"></div>
 
-  <!-- Active session banner — no cancel once started -->
+  <!-- Active session banner -->
   <div id="active-booking-banner" class="active-booking-banner">
     <p class="active-booking-label">✓ Active session now</p>
     <p class="active-booking-time" id="active-booking-time-text">—</p>
@@ -359,10 +359,10 @@ input::placeholder { color:var(--muted); }
     </div>
   </div>
 
-  <!-- Cancel booking confirm popup -->
+  <!-- Cancel confirmation popup -->
   <div id="cancel-booking-box" class="confirm-box" style="margin-top:16px">
     <p class="confirm-box-title">Cancel this booking?</p>
-    <p class="confirm-box-sub" id="cancel-booking-msg">Are you sure you want to cancel? You will be refunded 1 visit.</p>
+    <p class="confirm-box-sub" id="cancel-booking-msg"></p>
     <div class="confirm-btns">
       <button class="btn btn-danger" onclick="confirmCancelBooking()" style="border-color:var(--danger)">Yes, cancel booking</button>
       <button class="btn btn-outline" onclick="dismissCancelConfirm()">Keep booking</button>
@@ -451,7 +451,7 @@ let selectedSlotHour = null;
 let pendingBookingSlot = null;
 let activeBooking = null;
 let allBookingsForDate = [];
-let pendingCancelBookingId = null; // booking queued for cancellation
+let pendingCancelBookingId = null;
 
 // ── INIT ──
 (async () => {
@@ -586,7 +586,6 @@ async function loadUserData() {
 }
 
 // ── WEEKLY VISIT COUNT ──
-// Counts only confirmed bookings (bookings ARE the visit unit — no access_logs deduction)
 async function getWeeklyUsed(weekStart) {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 7);
@@ -599,12 +598,14 @@ async function getWeeklyUsed(weekStart) {
 }
 
 // ── BOOKING WINDOW END ──
+// Last bookable day = Sunday ending next week (Mon–Sun)
+// Loop uses < not <= so Monday of the week after never appears
 function getBookingWindowEnd() {
   const thisWeekStart = getWeekStart();
   const nextWeekStart = new Date(thisWeekStart);
   nextWeekStart.setDate(thisWeekStart.getDate() + 7);
   const windowEnd = new Date(nextWeekStart);
-  windowEnd.setDate(nextWeekStart.getDate() + 6);
+  windowEnd.setDate(nextWeekStart.getDate() + 6); // Sunday of next week
   windowEnd.setHours(23, 59, 59, 999);
   return windowEnd;
 }
@@ -815,7 +816,8 @@ function buildDatePicker() {
   const msPerDay = 24 * 60 * 60 * 1000;
   const daysToShow = Math.round((windowEnd - today) / msPerDay);
 
-  for (let i = 0; i <= daysToShow; i++) {
+  // Use < (not <=) so the Monday starting the week after next never appears
+  for (let i = 0; i < daysToShow; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     const pill = document.createElement('div');
@@ -965,8 +967,7 @@ async function confirmBooking() {
   await populateDashboard();
 }
 
-// ── CANCEL BOOKING (with confirmation) ──
-// Called by the Cancel button on each upcoming booking row
+// ── CANCEL BOOKING ──
 function promptCancelBooking(bookingId, slotStartISO) {
   pendingCancelBookingId = bookingId;
   const start = new Date(slotStartISO);
@@ -976,7 +977,6 @@ function promptCancelBooking(bookingId, slotStartISO) {
     '</strong> session at <strong>' + formatTime(start) + '</strong>?<br><br>' +
     'You will be refunded 1 visit.';
   document.getElementById('cancel-booking-box').classList.add('show');
-  // Scroll to the popup
   document.getElementById('cancel-booking-box').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
@@ -989,10 +989,8 @@ async function confirmCancelBooking() {
   if (!pendingCancelBookingId) return;
   const bookingId = pendingCancelBookingId;
   dismissCancelConfirm();
-
   const { error } = await sb.from('bookings').update({ status: 'cancelled' }).eq('id', bookingId);
   if (error) { showError('access', 'Could not cancel booking.'); return; }
-
   await loadUpcomingBookings();
   await loadSlotsForDate(selectedDate);
   await populateDashboard();
@@ -1000,14 +998,12 @@ async function confirmCancelBooking() {
 }
 
 // ── CODE GENERATION ──
-// No confirm step — just generate. Visit was already counted at booking time.
 async function generateAccessCode() {
   if (!activeBooking) return;
   const podId = currentPod?.id;
   if (!podId) return showError('access', 'No pod assigned to your membership.');
 
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-
   document.getElementById('code-value').textContent = code;
   document.getElementById('code-pod-name').textContent = currentPod?.name || '';
   document.getElementById('code-display').classList.add('show');
@@ -1061,18 +1057,14 @@ async function loadUpcomingBookings() {
     const hasStarted = start <= now;
     const div = document.createElement('div');
     div.className = 'booking-item';
-
-    // Only show cancel button if session hasn't started yet
     const cancelBtn = hasStarted
       ? '<span style="font-size:12px;color:var(--muted);padding:6px 0">In progress</span>'
       : '<button class="booking-cancel" onclick="promptCancelBooking(\'' + b.id + '\', \'' + b.slot_start + '\')">Cancel</button>';
-
     div.innerHTML =
       '<div>' +
         '<p class="booking-date">' + start.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + '</p>' +
         '<p class="booking-time-text">' + formatTime(start) + ' – ' + formatTime(end) + '</p>' +
-      '</div>' +
-      cancelBtn;
+      '</div>' + cancelBtn;
     container.appendChild(div);
   });
 }
