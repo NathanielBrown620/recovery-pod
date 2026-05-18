@@ -324,22 +324,14 @@ input::placeholder { color:var(--muted); }
   <div id="visits-warning" class="visits-warning">You have no visits remaining this week. Resets every Monday.</div>
   <div id="error-access" class="error-msg" style="margin-bottom:16px"></div>
 
+  <!-- Active session banner — no cancel once started -->
   <div id="active-booking-banner" class="active-booking-banner">
     <p class="active-booking-label">✓ Active session now</p>
     <p class="active-booking-time" id="active-booking-time-text">—</p>
-    <button class="btn btn-success" id="btn-generate" onclick="promptConfirmCode()" style="margin-bottom:10px">Generate Access Code</button>
-    <button class="btn btn-danger" onclick="cancelActiveBooking()" style="padding:12px;font-size:13px">Cancel this booking</button>
+    <button class="btn btn-success" id="btn-generate" onclick="generateAccessCode()" style="margin-bottom:0">Generate Access Code</button>
   </div>
 
-  <div id="confirm-box" class="confirm-box">
-    <p class="confirm-box-title">Use a visit?</p>
-    <p class="confirm-box-sub" id="confirm-box-msg"></p>
-    <div class="confirm-btns">
-      <button class="btn btn-primary" onclick="generateAccessCode()">Yes, generate code</button>
-      <button class="btn btn-outline" onclick="cancelConfirm()">Cancel</button>
-    </div>
-  </div>
-
+  <!-- Code display -->
   <div id="code-display" class="code-display">
     <p class="code-label">Your entry code</p>
     <p class="code-number" id="code-value">——</p>
@@ -347,6 +339,7 @@ input::placeholder { color:var(--muted); }
     <p class="code-timer">Expires in <span id="code-countdown">60:00</span></p>
   </div>
 
+  <!-- Date picker + slots -->
   <div id="booking-section" style="margin-top:28px">
     <p class="section-title">Select a date</p>
     <div class="date-scroll" id="date-scroll"></div>
@@ -354,6 +347,8 @@ input::placeholder { color:var(--muted); }
     <p class="section-title">Available slots</p>
     <div id="slots-loading" style="color:var(--muted);font-size:14px;padding:8px 0 16px;display:none">Loading slots...</div>
     <div class="slots-grid" id="slots-grid"></div>
+
+    <!-- Confirm booking -->
     <div id="confirm-booking-box" class="confirm-box">
       <p class="confirm-box-title">Confirm booking</p>
       <p class="confirm-box-sub" id="confirm-booking-msg"></p>
@@ -364,6 +359,17 @@ input::placeholder { color:var(--muted); }
     </div>
   </div>
 
+  <!-- Cancel booking confirm popup -->
+  <div id="cancel-booking-box" class="confirm-box" style="margin-top:16px">
+    <p class="confirm-box-title">Cancel this booking?</p>
+    <p class="confirm-box-sub" id="cancel-booking-msg">Are you sure you want to cancel? You will be refunded 1 visit.</p>
+    <div class="confirm-btns">
+      <button class="btn btn-danger" onclick="confirmCancelBooking()" style="border-color:var(--danger)">Yes, cancel booking</button>
+      <button class="btn btn-outline" onclick="dismissCancelConfirm()">Keep booking</button>
+    </div>
+  </div>
+
+  <!-- Upcoming bookings -->
   <div style="margin-top:32px">
     <p class="section-title">Your upcoming bookings</p>
     <div id="upcoming-bookings"></div>
@@ -445,6 +451,7 @@ let selectedSlotHour = null;
 let pendingBookingSlot = null;
 let activeBooking = null;
 let allBookingsForDate = [];
+let pendingCancelBookingId = null; // booking queued for cancellation
 
 // ── INIT ──
 (async () => {
@@ -579,28 +586,25 @@ async function loadUserData() {
 }
 
 // ── WEEKLY VISIT COUNT ──
+// Counts only confirmed bookings (bookings ARE the visit unit — no access_logs deduction)
 async function getWeeklyUsed(weekStart) {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 7);
-  const [{ data: logs }, { data: bookings }] = await Promise.all([
-    sb.from('access_logs').select('id')
-      .eq('profile_id', currentUser.id).eq('granted', true)
-      .gte('accessed_at', weekStart.toISOString()).lt('accessed_at', weekEnd.toISOString()),
-    sb.from('bookings').select('id')
-      .eq('profile_id', currentUser.id).eq('status', 'confirmed')
-      .gte('slot_start', weekStart.toISOString()).lt('slot_start', weekEnd.toISOString())
-  ]);
-  return (logs?.length || 0) + (bookings?.length || 0);
+  const { data: bookings } = await sb.from('bookings').select('id')
+    .eq('profile_id', currentUser.id)
+    .eq('status', 'confirmed')
+    .gte('slot_start', weekStart.toISOString())
+    .lt('slot_start', weekEnd.toISOString());
+  return bookings?.length || 0;
 }
 
-// ── BOOKING WINDOW HELPERS ──
-// Returns the last bookable date: Sunday ending next week (Mon–Sun)
+// ── BOOKING WINDOW END ──
 function getBookingWindowEnd() {
-  const thisWeekStart = getWeekStart(); // Monday of current week
+  const thisWeekStart = getWeekStart();
   const nextWeekStart = new Date(thisWeekStart);
-  nextWeekStart.setDate(thisWeekStart.getDate() + 7); // Monday of next week
+  nextWeekStart.setDate(thisWeekStart.getDate() + 7);
   const windowEnd = new Date(nextWeekStart);
-  windowEnd.setDate(nextWeekStart.getDate() + 6); // Sunday of next week
+  windowEnd.setDate(nextWeekStart.getDate() + 6);
   windowEnd.setHours(23, 59, 59, 999);
   return windowEnd;
 }
@@ -773,6 +777,7 @@ function populateProfile() {
 async function populateAccessScreen() {
   document.getElementById('access-pod-name').textContent = currentPod?.name || '—';
   hideError('access');
+  document.getElementById('cancel-booking-box').classList.remove('show');
 
   const now = new Date();
   const { data: active } = await sb.from('bookings')
@@ -788,7 +793,9 @@ async function populateAccessScreen() {
       formatTime(start) + ' – ' + formatTime(end) + ' · ' +
       start.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
     banner.classList.add('show');
-    document.getElementById('btn-generate').disabled = false;
+    const genBtn = document.getElementById('btn-generate');
+    genBtn.disabled = false;
+    genBtn.textContent = 'Generate Access Code';
   } else {
     banner.classList.remove('show');
   }
@@ -804,7 +811,6 @@ function buildDatePicker() {
   today.setHours(0, 0, 0, 0);
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  // Window always ends on the Sunday of next week (relative to Mon–Sun weeks)
   const windowEnd = getBookingWindowEnd();
   const msPerDay = 24 * 60 * 60 * 1000;
   const daysToShow = Math.round((windowEnd - today) / msPerDay);
@@ -959,6 +965,82 @@ async function confirmBooking() {
   await populateDashboard();
 }
 
+// ── CANCEL BOOKING (with confirmation) ──
+// Called by the Cancel button on each upcoming booking row
+function promptCancelBooking(bookingId, slotStartISO) {
+  pendingCancelBookingId = bookingId;
+  const start = new Date(slotStartISO);
+  document.getElementById('cancel-booking-msg').innerHTML =
+    'Are you sure you want to cancel your <strong>' +
+    start.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) +
+    '</strong> session at <strong>' + formatTime(start) + '</strong>?<br><br>' +
+    'You will be refunded 1 visit.';
+  document.getElementById('cancel-booking-box').classList.add('show');
+  // Scroll to the popup
+  document.getElementById('cancel-booking-box').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function dismissCancelConfirm() {
+  pendingCancelBookingId = null;
+  document.getElementById('cancel-booking-box').classList.remove('show');
+}
+
+async function confirmCancelBooking() {
+  if (!pendingCancelBookingId) return;
+  const bookingId = pendingCancelBookingId;
+  dismissCancelConfirm();
+
+  const { error } = await sb.from('bookings').update({ status: 'cancelled' }).eq('id', bookingId);
+  if (error) { showError('access', 'Could not cancel booking.'); return; }
+
+  await loadUpcomingBookings();
+  await loadSlotsForDate(selectedDate);
+  await populateDashboard();
+  if (selectedDate) await updateWeekVisitsPill(selectedDate);
+}
+
+// ── CODE GENERATION ──
+// No confirm step — just generate. Visit was already counted at booking time.
+async function generateAccessCode() {
+  if (!activeBooking) return;
+  const podId = currentPod?.id;
+  if (!podId) return showError('access', 'No pod assigned to your membership.');
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+  document.getElementById('code-value').textContent = code;
+  document.getElementById('code-pod-name').textContent = currentPod?.name || '';
+  document.getElementById('code-display').classList.add('show');
+  hideError('access');
+
+  if (codeTimer) clearInterval(codeTimer);
+  let seconds = 3600;
+  updateCountdown(seconds);
+
+  const genBtn = document.getElementById('btn-generate');
+  genBtn.disabled = true;
+  genBtn.textContent = 'Code active';
+
+  codeTimer = setInterval(() => {
+    seconds--;
+    updateCountdown(seconds);
+    if (seconds <= 0) {
+      clearInterval(codeTimer);
+      document.getElementById('code-value').textContent = 'Expired';
+      document.getElementById('code-countdown').textContent = 'Expired';
+      genBtn.disabled = false;
+      genBtn.textContent = 'Generate Access Code';
+      document.getElementById('code-display').classList.remove('show');
+    }
+  }, 1000);
+}
+
+function updateCountdown(s) {
+  const m = Math.floor(s / 60).toString().padStart(2, '0');
+  const sec = (s % 60).toString().padStart(2, '0');
+  document.getElementById('code-countdown').textContent = m + ':' + sec;
+}
+
 async function loadUpcomingBookings() {
   const now = new Date();
   const { data: bookings } = await sb.from('bookings')
@@ -976,111 +1058,23 @@ async function loadUpcomingBookings() {
   bookings.forEach(b => {
     const start = new Date(b.slot_start);
     const end = new Date(b.slot_end);
+    const hasStarted = start <= now;
     const div = document.createElement('div');
     div.className = 'booking-item';
+
+    // Only show cancel button if session hasn't started yet
+    const cancelBtn = hasStarted
+      ? '<span style="font-size:12px;color:var(--muted);padding:6px 0">In progress</span>'
+      : '<button class="booking-cancel" onclick="promptCancelBooking(\'' + b.id + '\', \'' + b.slot_start + '\')">Cancel</button>';
+
     div.innerHTML =
       '<div>' +
         '<p class="booking-date">' + start.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + '</p>' +
         '<p class="booking-time-text">' + formatTime(start) + ' – ' + formatTime(end) + '</p>' +
       '</div>' +
-      '<button class="booking-cancel" onclick="cancelBooking(\'' + b.id + '\')">Cancel</button>';
+      cancelBtn;
     container.appendChild(div);
   });
-}
-
-async function cancelBooking(bookingId) {
-  const { error } = await sb.from('bookings').update({ status: 'cancelled' }).eq('id', bookingId);
-  if (error) { showError('access', 'Could not cancel booking.'); return; }
-  await loadUpcomingBookings();
-  await loadSlotsForDate(selectedDate);
-  await populateDashboard();
-  if (selectedDate) await updateWeekVisitsPill(selectedDate);
-}
-
-async function cancelActiveBooking() {
-  if (!activeBooking) return;
-  await cancelBooking(activeBooking.id);
-  activeBooking = null;
-  document.getElementById('active-booking-banner').classList.remove('show');
-  document.getElementById('code-display').classList.remove('show');
-  if (codeTimer) clearInterval(codeTimer);
-}
-
-// ── CODE GENERATION ──
-async function promptConfirmCode() {
-  if (!activeBooking) return;
-  const total = currentTier?.weekly_visits || 0;
-  const isUnlimited = total >= 99;
-  const weekStart = getWeekStart();
-  const used = isUnlimited ? 0 : await getWeeklyUsed(weekStart);
-  const remainingAfter = isUnlimited ? '∞' : (total - used - 1);
-
-  document.getElementById('confirm-box-msg').innerHTML =
-    'This will generate your entry code for <strong>' + (currentPod?.name || 'your pod') + '</strong>.<br><br>' +
-    (isUnlimited ? 'You have unlimited visits.' : 'You will have <strong>' + remainingAfter + ' of ' + total + '</strong> visits remaining this week.');
-
-  document.getElementById('confirm-box').classList.add('show');
-  document.getElementById('btn-generate').style.display = 'none';
-}
-
-function cancelConfirm() {
-  document.getElementById('confirm-box').classList.remove('show');
-  document.getElementById('btn-generate').style.display = 'block';
-}
-
-async function generateAccessCode() {
-  document.getElementById('confirm-box').classList.remove('show');
-  const podId = currentPod?.id;
-  if (!podId) return showError('access', 'No pod assigned to your membership.');
-
-  const weekStart = getWeekStart();
-  const total = currentTier?.weekly_visits || 0;
-  const isUnlimited = total >= 99;
-  const used = isUnlimited ? 0 : await getWeeklyUsed(weekStart);
-  const granted = isUnlimited || used < total;
-
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  await sb.from('access_logs').insert({
-    profile_id: currentUser.id, pod_id: podId, granted,
-    visit_count_this_week: used + (granted ? 1 : 0)
-  });
-
-  if (!granted) { document.getElementById('visits-warning').classList.add('show'); return; }
-
-  document.getElementById('code-value').textContent = code;
-  document.getElementById('code-pod-name').textContent = currentPod?.name || '';
-  document.getElementById('code-display').classList.add('show');
-  hideError('access');
-
-  if (codeTimer) clearInterval(codeTimer);
-  let seconds = 3600;
-  updateCountdown(seconds);
-
-  const genBtn = document.getElementById('btn-generate');
-  genBtn.disabled = true;
-  genBtn.style.display = 'block';
-  genBtn.textContent = 'Code active';
-
-  codeTimer = setInterval(() => {
-    seconds--;
-    updateCountdown(seconds);
-    if (seconds <= 0) {
-      clearInterval(codeTimer);
-      document.getElementById('code-value').textContent = 'Expired';
-      document.getElementById('code-countdown').textContent = 'Expired';
-      genBtn.disabled = false;
-      genBtn.textContent = 'Generate Access Code';
-      document.getElementById('code-display').classList.remove('show');
-    }
-  }, 1000);
-
-  await populateDashboard();
-}
-
-function updateCountdown(s) {
-  const m = Math.floor(s / 60).toString().padStart(2, '0');
-  const sec = (s % 60).toString().padStart(2, '0');
-  document.getElementById('code-countdown').textContent = m + ':' + sec;
 }
 
 // ── NAVIGATION ──
